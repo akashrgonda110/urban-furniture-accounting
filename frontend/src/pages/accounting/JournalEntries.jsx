@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api";
+import SuccessAlert from "../../components/SuccessAlert";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(n ?? 0);
@@ -69,10 +70,18 @@ export default function JournalEntries() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.journal_id) { setError("Select a journal"); return; }
+    if (!form.journal_id) { setError("Please select a journal."); return; }
+    if (!form.entry_date) { setError("Entry date is required."); return; }
     const validLines = lines.filter((l) => l.account_id && (parseFloat(l.debit) > 0 || parseFloat(l.credit) > 0));
-    if (validLines.length < 2) { setError("At least two journal lines are required"); return; }
-    if (!isBalanced) { setError(`Entry is unbalanced. Debit: ${fmt(totalDebit)}, Credit: ${fmt(totalCredit)}`); return; }
+    if (validLines.length < 2) { setError("At least two journal lines with an account and an amount are required."); return; }
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      if (!l.account_id && (parseFloat(l.debit) > 0 || parseFloat(l.credit) > 0))
+        { setError(`Line ${i + 1}: Please select an account.`); return; }
+      if (l.debit !== "" && isNaN(parseFloat(l.debit))) { setError(`Line ${i + 1}: Debit must be a valid number.`); return; }
+      if (l.credit !== "" && isNaN(parseFloat(l.credit))) { setError(`Line ${i + 1}: Credit must be a valid number.`); return; }
+    }
+    if (!isBalanced) { setError(`Entry is unbalanced. Debit: ${fmt(totalDebit)}, Credit: ${fmt(totalCredit)}. They must be equal.`); return; }
 
     setSaving(true); setError("");
     try {
@@ -86,12 +95,7 @@ export default function JournalEntries() {
 
   return (
     <div>
-      {success && (
-        <div className="alert alert-success">
-          {success}
-          <button onClick={() => setSuccess("")} style={{ float: "right", background: "none", border: "none", cursor: "pointer" }}>✕</button>
-        </div>
-      )}
+      <SuccessAlert message={success} onClose={() => setSuccess("")} />
       {error && !showCreate && !viewEntry && <div className="alert alert-error">{error}</div>}
 
       <div className="toolbar">

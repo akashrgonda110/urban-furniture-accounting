@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api";
+import SuccessAlert from "../../components/SuccessAlert";
 
 const EMPTY = { account_name: "", account_type: "asset", is_active: true };
 const TYPES = ["asset", "liability", "expense", "income", "capital"];
@@ -35,7 +36,10 @@ export default function ChartOfAccounts() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.account_name.trim()) { setError("Account name is required"); return; }
+    const name = form.account_name.trim();
+    if (!name) { setError("Account name is required."); return; }
+    if (name.length < 2) { setError("Account name must be at least 2 characters."); return; }
+    if (!/^[a-zA-Z0-9\s'.,&()/-]+$/.test(name)) { setError("Account name can only contain letters, numbers, spaces, and basic punctuation."); return; }
     setSaving(true); setError("");
     try {
       if (editing) {
@@ -73,7 +77,7 @@ export default function ChartOfAccounts() {
 
   return (
     <div>
-      {success && <div className="alert alert-success">{success} <button onClick={() => setSuccess("")} style={{ float:"right",background:"none",border:"none",cursor:"pointer" }}>✕</button></div>}
+      <SuccessAlert message={success} onClose={() => setSuccess("")} />
       {error && !showModal && <div className="alert alert-error">{error}</div>}
 
       <div className="toolbar">

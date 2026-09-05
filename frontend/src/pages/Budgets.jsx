@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import SuccessAlert from "../components/SuccessAlert";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(n ?? 0);
@@ -52,12 +53,18 @@ export default function Budgets() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name.trim()) { setError("Budget name is required"); return; }
-    if (!form.analytic_account_id) { setError("Analytic account is required"); return; }
-    if (!form.start_date || !form.end_date) { setError("Start and end dates are required"); return; }
-    if (form.end_date < form.start_date) { setError("End date must be after start date"); return; }
-    if (!form.planned_amount || parseFloat(form.planned_amount) < 0) { setError("Planned amount must be 0 or more"); return; }
-
+    const bname = form.name.trim();
+    if (!bname) { setError("Budget name is required."); return; }
+    if (bname.length < 2) { setError("Budget name must be at least 2 characters."); return; }
+    if (!form.analytic_account_id) { setError("Analytic account is required."); return; }
+    if (!form.start_date) { setError("Start date is required."); return; }
+    if (!form.end_date) { setError("End date is required."); return; }
+    if (form.end_date < form.start_date) { setError("End date must be on or after start date."); return; }
+    if (form.planned_amount === "" || form.planned_amount === null) { setError("Planned amount is required."); return; }
+    const amt = parseFloat(form.planned_amount);
+    if (isNaN(amt) || amt < 0) { setError("Planned amount must be 0 or a positive number."); return; }
+    if (form.responsible_person && form.responsible_person.trim() && !/^[a-zA-Z\s'.,-]+$/.test(form.responsible_person.trim()))
+      { setError("Responsible person name should contain letters only."); return; }
     setSaving(true); setError("");
     try {
       if (editing) {

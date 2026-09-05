@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api";
+import SuccessAlert from "../../components/SuccessAlert";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(n ?? 0);
@@ -88,9 +89,17 @@ export default function SalesOrders() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.customer_id) { setError("Please select a customer"); return; }
-    if (items.some((it) => !it.product_id || !it.unit_price)) {
-      setError("All items must have a product and unit price"); return;
+    if (!form.customer_id) { setError("Please select a customer."); return; }
+    if (items.length === 0) { setError("Add at least one item."); return; }
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      if (!it.product_id) { setError(`Item ${i + 1}: Please select a product.`); return; }
+      const qty = parseFloat(it.quantity);
+      if (!it.quantity || isNaN(qty) || qty <= 0) { setError(`Item ${i + 1}: Quantity must be greater than 0.`); return; }
+      const price = parseFloat(it.unit_price);
+      if (it.unit_price === "" || isNaN(price) || price < 0) { setError(`Item ${i + 1}: Unit price must be 0 or a positive number.`); return; }
+      const tax = parseFloat(it.tax_rate);
+      if (it.tax_rate !== "" && (isNaN(tax) || tax < 0 || tax > 100)) { setError(`Item ${i + 1}: Tax rate must be between 0 and 100.`); return; }
     }
     setSaving(true); setError("");
     try {
@@ -132,12 +141,7 @@ export default function SalesOrders() {
 
   return (
     <div>
-      {success && (
-        <div className="alert alert-success">
-          {success}
-          <button onClick={() => setSuccess("")} style={{ float: "right", background: "none", border: "none", cursor: "pointer" }}>✕</button>
-        </div>
-      )}
+      <SuccessAlert message={success} onClose={() => setSuccess("")} />
       {error && !showCreate && !viewOrder && <div className="alert alert-error">{error}</div>}
 
       <div className="toolbar">

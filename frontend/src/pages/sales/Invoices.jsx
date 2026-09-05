@@ -42,8 +42,11 @@ export default function Invoices() {
 
   const handlePay = async (e) => {
     e.preventDefault();
-    if (!payForm.journal_id) { setError("Select a journal"); return; }
-    if (!payForm.amount || parseFloat(payForm.amount) <= 0) { setError("Enter a valid amount"); return; }
+    if (!payForm.journal_id) { setError("Please select a payment journal."); return; }
+    const amt = parseFloat(payForm.amount);
+    if (!payForm.amount || isNaN(amt) || amt <= 0) { setError("Payment amount must be greater than 0."); return; }
+    if (amt > parseFloat(showPayModal.total_amount) + 0.01) { setError(`Amount cannot exceed the invoice total of ₹${showPayModal.total_amount}.`); return; }
+    if (!payForm.payment_date) { setError("Payment date is required."); return; }
     setPaying(true); setError("");
     try {
       await api.payInvoice(showPayModal.id, payForm);

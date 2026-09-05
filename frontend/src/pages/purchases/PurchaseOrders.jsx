@@ -85,10 +85,17 @@ export default function PurchaseOrders() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.vendor_id) { setError("Please select a vendor"); return; }
-    if (items.some((it) => !it.product_id || !it.unit_price)) {
-      setError("All items must have a product and unit price");
-      return;
+    if (!form.vendor_id) { setError("Please select a vendor."); return; }
+    if (items.length === 0) { setError("Add at least one item."); return; }
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      if (!it.product_id) { setError(`Item ${i + 1}: Please select a product.`); return; }
+      const qty = parseFloat(it.quantity);
+      if (!it.quantity || isNaN(qty) || qty <= 0) { setError(`Item ${i + 1}: Quantity must be greater than 0.`); return; }
+      const price = parseFloat(it.unit_price);
+      if (it.unit_price === "" || isNaN(price) || price < 0) { setError(`Item ${i + 1}: Unit price must be 0 or a positive number.`); return; }
+      const tax = parseFloat(it.tax_rate);
+      if (it.tax_rate !== "" && (isNaN(tax) || tax < 0 || tax > 100)) { setError(`Item ${i + 1}: Tax rate must be between 0 and 100.`); return; }
     }
     setSaving(true); setError("");
     try {

@@ -1,7 +1,41 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import SuccessAlert from "../components/SuccessAlert";
 
 const EMPTY = { name: "", type: "customer", email: "", mobile: "", city: "", state: "", pincode: "", profile_image: "" };
+
+// ── Validation helpers ────────────────────────────────────────────────────────
+function validateContact(form) {
+  const name = form.name.trim();
+  if (!name) return "Name is required.";
+  if (name.length < 2) return "Name must be at least 2 characters.";
+  if (!/^[a-zA-Z\s'.,-]+$/.test(name)) return "Name can only contain letters, spaces, and basic punctuation.";
+
+  if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+    return "Enter a valid email address.";
+
+  if (form.mobile) {
+    const mobile = form.mobile.replace(/\s/g, "");
+    if (!/^\+?[0-9]{7,15}$/.test(mobile))
+      return "Mobile must contain 7–15 digits (optionally starting with +).";
+  }
+
+  if (form.city && !/^[a-zA-Z\s'-]+$/.test(form.city))
+    return "City should contain letters only.";
+
+  if (form.state && !/^[a-zA-Z\s'-]+$/.test(form.state))
+    return "State should contain letters only.";
+
+  if (form.pincode && !/^\d{4,10}$/.test(form.pincode.trim()))
+    return "Pincode must be 4–10 digits.";
+
+  if (form.profile_image && form.profile_image.trim()) {
+    try { new URL(form.profile_image.trim()); }
+    catch { return "Profile Image URL is not a valid URL."; }
+  }
+
+  return null;
+}
 
 export default function Contacts() {
   const [contacts, setContacts] = useState([]);
@@ -15,6 +49,7 @@ export default function Contacts() {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [deleteId, setDeleteId] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const load = () => {
     setLoading(true);
@@ -25,24 +60,30 @@ export default function Contacts() {
 
   useEffect(() => { load(); }, []);
 
-  const openAdd = () => { setEditing(null); setForm(EMPTY); setError(""); setShowModal(true); };
-  const openEdit = (c) => { setEditing(c.id); setForm({ ...c, profile_image: c.profile_image || "" }); setError(""); setShowModal(true); };
-  const closeModal = () => { setShowModal(false); setError(""); };
+  const openAdd = () => { setEditing(null); setForm(EMPTY); setError(""); setFieldErrors({}); setShowModal(true); };
+  const openEdit = (c) => { setEditing(c.id); setForm({ ...c, profile_image: c.profile_image || "" }); setError(""); setFieldErrors({}); setShowModal(true); };
+  const closeModal = () => { setShowModal(false); setError(""); setFieldErrors({}); };
 
-  const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+    // Clear field error on change
+    if (fieldErrors[name]) setFieldErrors((fe) => ({ ...fe, [name]: "" }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name.trim()) { setError("Name is required"); return; }
+    const err = validateContact(form);
+    if (err) { setError(err); return; }
     setSaving(true);
     setError("");
     try {
       if (editing) {
         await api.updateContact(editing, form);
-        setSuccess("Contact updated.");
+        setSuccess("Contact updated successfully.");
       } else {
         await api.createContact(form);
-        setSuccess("Contact created.");
+        setSuccess("Contact created successfully.");
       }
       closeModal();
       load();
@@ -74,7 +115,7 @@ export default function Contacts() {
 
   return (
     <div>
-      {success && <div className="alert alert-success">{success} <button onClick={() => setSuccess("")} style={{ float: "right", background: "none", border: "none", cursor: "pointer" }}>✕</button></div>}
+      <SuccessAlert message={success} onClose={() => setSuccess("")} />
       {error && !showModal && <div className="alert alert-error">{error}</div>}
 
       <div className="toolbar">
@@ -144,13 +185,20 @@ export default function Contacts() {
               <h3>{editing ? "Edit Contact" : "Add Contact"}</h3>
               <button className="modal-close" onClick={closeModal}>✕</button>
             </div>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               <div className="modal-body">
                 {error && <div className="alert alert-error" style={{ marginBottom: 12 }}>{error}</div>}
                 <div className="form-grid">
                   <div className="form-group span-2">
                     <label>Name *</label>
-                    <input name="name" value={form.name} onChange={handleChange} placeholder="Full name" required />
+                    <input
+                      name="name"
+                      value={form.name}
+                      onChange={handleChange}
+                      placeholder="e.g. Rajesh Kumar"
+                      maxLength={150}
+                    />
+                    <span className="form-hint">Letters, spaces, and basic punctuation only.</span>
                   </div>
                   <div className="form-group">
                     <label>Type *</label>
@@ -162,27 +210,66 @@ export default function Contacts() {
                   </div>
                   <div className="form-group">
                     <label>Email</label>
-                    <input name="email" type="email" value={form.email} onChange={handleChange} placeholder="email@example.com" />
+                    <input
+                      name="email"
+                      type="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      placeholder="email@example.com"
+                      maxLength={150}
+                    />
                   </div>
                   <div className="form-group">
                     <label>Mobile</label>
-                    <input name="mobile" value={form.mobile} onChange={handleChange} placeholder="+91 98765 43210" />
+                    <input
+                      name="mobile"
+                      value={form.mobile}
+                      onChange={handleChange}
+                      placeholder="+91 9876543210"
+                      maxLength={16}
+                    />
+                    <span className="form-hint">Digits only, 7–15 characters. Optional +country code.</span>
                   </div>
                   <div className="form-group">
                     <label>City</label>
-                    <input name="city" value={form.city} onChange={handleChange} placeholder="Mumbai" />
+                    <input
+                      name="city"
+                      value={form.city}
+                      onChange={handleChange}
+                      placeholder="Mumbai"
+                      maxLength={100}
+                    />
                   </div>
                   <div className="form-group">
                     <label>State</label>
-                    <input name="state" value={form.state} onChange={handleChange} placeholder="Maharashtra" />
+                    <input
+                      name="state"
+                      value={form.state}
+                      onChange={handleChange}
+                      placeholder="Maharashtra"
+                      maxLength={100}
+                    />
                   </div>
                   <div className="form-group">
                     <label>Pincode</label>
-                    <input name="pincode" value={form.pincode} onChange={handleChange} placeholder="400001" />
+                    <input
+                      name="pincode"
+                      value={form.pincode}
+                      onChange={handleChange}
+                      placeholder="400001"
+                      maxLength={10}
+                    />
+                    <span className="form-hint">4–10 digits only.</span>
                   </div>
                   <div className="form-group span-2">
                     <label>Profile Image URL</label>
-                    <input name="profile_image" value={form.profile_image} onChange={handleChange} placeholder="https://…" />
+                    <input
+                      name="profile_image"
+                      value={form.profile_image}
+                      onChange={handleChange}
+                      placeholder="https://example.com/photo.jpg"
+                      maxLength={500}
+                    />
                   </div>
                 </div>
               </div>

@@ -1,10 +1,34 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import SuccessAlert from "../components/SuccessAlert";
 
 const EMPTY = { name: "", type: "goods", sales_price: "", purchase_price: "", category: "" };
 
 function fmt(n) {
   return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(n);
+}
+
+function validateProduct(form) {
+  const name = form.name.trim();
+  if (!name) return "Product name is required.";
+  if (name.length < 2) return "Product name must be at least 2 characters.";
+  if (!/[a-zA-Z]/.test(name))
+    return "Product name must contain at least one letter.";
+  if (!/^[a-zA-Z0-9\s'.,&()-]+$/.test(name))
+    return "Product name can only contain letters, numbers, spaces, and basic punctuation.";
+
+  const sp = form.sales_price === "" ? null : parseFloat(form.sales_price);
+  const pp = form.purchase_price === "" ? null : parseFloat(form.purchase_price);
+
+  if (sp !== null && (isNaN(sp) || sp < 0))
+    return "Sales price must be 0 or a positive number.";
+  if (pp !== null && (isNaN(pp) || pp < 0))
+    return "Purchase price must be 0 or a positive number.";
+
+  if (form.category && form.category.trim() && !/^[a-zA-Z\s&/-]+$/.test(form.category.trim()))
+    return "Category should contain letters only.";
+
+  return null;
 }
 
 export default function Products() {
@@ -29,22 +53,23 @@ export default function Products() {
   useEffect(() => { load(); }, []);
 
   const openAdd = () => { setEditing(null); setForm(EMPTY); setError(""); setShowModal(true); };
-  const openEdit = (p) => { setEditing(p.id); setForm({ ...p }); setError(""); setShowModal(true); };
+  const openEdit = (p) => { setEditing(p.id); setForm({ ...p, sales_price: String(p.sales_price), purchase_price: String(p.purchase_price) }); setError(""); setShowModal(true); };
   const closeModal = () => { setShowModal(false); setError(""); };
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name.trim()) { setError("Product name is required"); return; }
+    const err = validateProduct(form);
+    if (err) { setError(err); return; }
     setSaving(true);
     setError("");
     try {
       if (editing) {
         await api.updateProduct(editing, form);
-        setSuccess("Product updated.");
+        setSuccess("Product updated successfully.");
       } else {
         await api.createProduct(form);
-        setSuccess("Product created.");
+        setSuccess("Product created successfully.");
       }
       closeModal();
       load();
@@ -74,7 +99,7 @@ export default function Products() {
 
   return (
     <div>
-      {success && <div className="alert alert-success">{success} <button onClick={() => setSuccess("")} style={{ float: "right", background: "none", border: "none", cursor: "pointer" }}>✕</button></div>}
+      <SuccessAlert message={success} onClose={() => setSuccess("")} />
       {error && !showModal && <div className="alert alert-error">{error}</div>}
 
       <div className="toolbar">
@@ -135,13 +160,19 @@ export default function Products() {
               <h3>{editing ? "Edit Product" : "Add Product"}</h3>
               <button className="modal-close" onClick={closeModal}>✕</button>
             </div>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               <div className="modal-body">
                 {error && <div className="alert alert-error">{error}</div>}
                 <div className="form-grid">
                   <div className="form-group span-2">
                     <label>Product Name *</label>
-                    <input name="name" value={form.name} onChange={handleChange} placeholder="e.g. Wooden Chair" required />
+                    <input
+                      name="name"
+                      value={form.name}
+                      onChange={handleChange}
+                      placeholder="e.g. Teak Dining Table"
+                      maxLength={150}
+                    />
                   </div>
                   <div className="form-group">
                     <label>Type *</label>
@@ -153,15 +184,38 @@ export default function Products() {
                   </div>
                   <div className="form-group">
                     <label>Category</label>
-                    <input name="category" value={form.category} onChange={handleChange} placeholder="e.g. Furniture" />
+                    <input
+                      name="category"
+                      value={form.category}
+                      onChange={handleChange}
+                      placeholder="e.g. Furniture"
+                      maxLength={100}
+                    />
+                    <span className="form-hint">Letters only, no numbers.</span>
                   </div>
                   <div className="form-group">
                     <label>Sales Price (₹)</label>
-                    <input name="sales_price" type="number" min="0" step="0.01" value={form.sales_price} onChange={handleChange} placeholder="0.00" />
+                    <input
+                      name="sales_price"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={form.sales_price}
+                      onChange={handleChange}
+                      placeholder="0.00"
+                    />
                   </div>
                   <div className="form-group">
                     <label>Purchase Price (₹)</label>
-                    <input name="purchase_price" type="number" min="0" step="0.01" value={form.purchase_price} onChange={handleChange} placeholder="0.00" />
+                    <input
+                      name="purchase_price"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={form.purchase_price}
+                      onChange={handleChange}
+                      placeholder="0.00"
+                    />
                   </div>
                 </div>
               </div>
