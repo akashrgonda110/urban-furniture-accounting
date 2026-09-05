@@ -1,4 +1,4 @@
-﻿import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { canAccess, defaultRoute } from "./context/permissions";
 import Layout from "./components/Layout";
@@ -8,28 +8,27 @@ import Login  from "./pages/Login";
 import Signup from "./pages/Signup";
 
 // App pages
-import Dashboard      from "./pages/Dashboard";
-import Contacts       from "./pages/Contacts";
-import Products       from "./pages/Products";
-import SalesOrders    from "./pages/sales/SalesOrders";
-import Invoices       from "./pages/sales/Invoices";
-import PurchaseOrders from "./pages/purchases/PurchaseOrders";
-import Bills          from "./pages/purchases/Bills";
-import Payments       from "./pages/Payments";
-import ChartOfAccounts from "./pages/accounting/ChartOfAccounts";
-import Journals       from "./pages/accounting/Journals";
-import JournalEntries from "./pages/accounting/JournalEntries";
+import Dashboard        from "./pages/Dashboard";
+import Contacts         from "./pages/Contacts";
+import Products         from "./pages/Products";
+import SalesOrders      from "./pages/sales/SalesOrders";
+import Invoices         from "./pages/sales/Invoices";
+import PurchaseOrders   from "./pages/purchases/PurchaseOrders";
+import Bills            from "./pages/purchases/Bills";
+import Payments         from "./pages/Payments";
+import ChartOfAccounts  from "./pages/accounting/ChartOfAccounts";
+import Journals         from "./pages/accounting/Journals";
+import JournalEntries   from "./pages/accounting/JournalEntries";
 import AnalyticAccounts from "./pages/AnalyticAccounts";
-import Budgets        from "./pages/Budgets";
-import BalanceSheet   from "./pages/reports/BalanceSheet";
-import ProfitLoss     from "./pages/reports/ProfitLoss";
-import BudgetReport   from "./pages/reports/BudgetReport";
-import MyPortal       from "./pages/MyPortal";
-import UserManagement from "./pages/UserManagement";
+import Budgets          from "./pages/Budgets";
+import BalanceSheet     from "./pages/reports/BalanceSheet";
+import ProfitLoss       from "./pages/reports/ProfitLoss";
+import BudgetReport     from "./pages/reports/BudgetReport";
+import MyPortal         from "./pages/MyPortal";
+import UserManagement   from "./pages/UserManagement";
 
 // ── Guards ────────────────────────────────────────────────────────────────────
 
-/** Redirect unauthenticated users to /login */
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="loading" style={{ marginTop: 80 }}>Loading…</div>;
@@ -37,7 +36,6 @@ function PrivateRoute({ children }) {
   return children;
 }
 
-/** Redirect already-logged-in users away from /login and /signup */
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="loading" style={{ marginTop: 80 }}>Loading…</div>;
@@ -45,14 +43,9 @@ function PublicRoute({ children }) {
   return children;
 }
 
-/**
- * RoleRoute — wraps a protected page.
- * If the current user's role is not allowed for `path`, shows an Access Denied screen.
- */
 function RoleRoute({ path, children }) {
   const { user } = useAuth();
   const role = user?.role || "";
-
   if (!canAccess(role, path)) {
     return (
       <div style={{ padding: 40, textAlign: "center" }}>
@@ -60,7 +53,6 @@ function RoleRoute({ path, children }) {
         <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Access Denied</h2>
         <p style={{ color: "var(--text-muted)", fontSize: 14, maxWidth: 360, margin: "0 auto 20px" }}>
           Your role (<strong>{role}</strong>) does not have permission to access this page.
-          Contact your administrator if you need access.
         </p>
         <a href={defaultRoute(role)} style={{ color: "var(--primary)", fontSize: 14 }}>
           ← Back to your home page
@@ -71,7 +63,6 @@ function RoleRoute({ path, children }) {
   return children;
 }
 
-/** Convenience: authenticated + role-checked + wrapped in Layout */
 function Page({ path, children }) {
   return (
     <PrivateRoute>
@@ -80,6 +71,12 @@ function Page({ path, children }) {
       </Layout>
     </PrivateRoute>
   );
+}
+
+// Smart fallback — redirects to the correct home page for each role
+function RoleFallback() {
+  const { user } = useAuth();
+  return <Navigate to={defaultRoute(user?.role)} replace />;
 }
 
 // ── Routes ────────────────────────────────────────────────────────────────────
@@ -92,7 +89,10 @@ function AppRoutes() {
       <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
 
       {/* Contact User portal */}
-      <Route path="/my-portal" element={<Page path="/my-portal"><MyPortal /></Page>} />
+      <Route path="/my-portal"   element={<Page path="/my-portal"><MyPortal /></Page>} />
+
+      {/* Admin only */}
+      <Route path="/admin/users" element={<Page path="/admin/users"><UserManagement /></Page>} />
 
       {/* Admin + Accountant */}
       <Route path="/"                      element={<Page path="/"><Dashboard /></Page>} />
@@ -112,16 +112,10 @@ function AppRoutes() {
       <Route path="/reports/profit-loss"   element={<Page path="/reports/profit-loss"><ProfitLoss /></Page>} />
       <Route path="/reports/budget"        element={<Page path="/reports/budget"><BudgetReport /></Page>} />
 
-      {/* Fallback */}
-      <Route path="*" element={<PrivateRoute><Navigate to={"/my-portal"} replace /></PrivateRoute>} />
+      {/* Fallback — role-aware redirect */}
+      <Route path="*" element={<PrivateRoute><RoleFallback /></PrivateRoute>} />
     </Routes>
   );
-}
-
-// Fallback redirect reads user role
-function SmartFallback() {
-  const { user } = useAuth();
-  return <Navigate to={defaultRoute(user?.role)} replace />;
 }
 
 export default function App() {
@@ -133,4 +127,3 @@ export default function App() {
     </BrowserRouter>
   );
 }
-
