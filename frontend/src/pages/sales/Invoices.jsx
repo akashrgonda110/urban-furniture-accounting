@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api";
 import SuccessAlert from "../../components/SuccessAlert";
+import { printDocument } from "../../utils/printDocument";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(n ?? 0);
@@ -145,6 +146,7 @@ export default function Invoices() {
                     <td>
                       <div className="actions">
                         <button className="btn btn-secondary btn-sm" onClick={() => openView(inv.id)}>View</button>
+                        <button className="btn btn-secondary btn-sm" onClick={async () => { const d = await api.getInvoice(inv.id); printDocument(d, "invoice"); }}>🖨</button>
                         {(inv.status === "unpaid" || inv.status === "partially_paid") && (
                           <button className="btn btn-success btn-sm" onClick={() => openPay(inv)}>Pay</button>
                         )}
@@ -207,6 +209,7 @@ export default function Invoices() {
               {viewInvoice.status === "unpaid" && (
                 <button className="btn btn-danger" onClick={() => handleCancel(viewInvoice.id)}>Cancel Invoice</button>
               )}
+              <button className="btn btn-secondary" onClick={() => printDocument(viewInvoice, "invoice")}>🖨 Print PDF</button>
               <button className="btn btn-secondary" onClick={() => setViewInvoice(null)}>Close</button>
             </div>
           </div>
