@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api";
 import SuccessAlert from "../../components/SuccessAlert";
+import Pagination from "../../components/Pagination";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(n ?? 0);
@@ -21,6 +22,9 @@ export default function JournalEntries() {
   const [filterJournal, setFilterJournal] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+
+  const PAGE_SIZE = 25;
+  const [page, setPage] = useState(1);
 
   const [form, setForm] = useState({ journal_id: "", entry_date: today(), reference: "", description: "" });
   const [lines, setLines] = useState([{ ...EMPTY_LINE }, { ...EMPTY_LINE }]);
@@ -111,6 +115,9 @@ export default function JournalEntries() {
     return matchesSearch && matchesJournal && matchesFrom && matchesTo;
   });
 
+  useEffect(() => { setPage(1); }, [search, filterJournal, dateFrom, dateTo]);
+  const paginated = filteredEntries.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <div>
       <SuccessAlert message={success} onClose={() => setSuccess("")} />
@@ -176,7 +183,7 @@ export default function JournalEntries() {
                 </tr>
               </thead>
               <tbody>
-                {filteredEntries.map((e) => {
+                {paginated.map((e) => {
                   const balanced = Math.abs(parseFloat(e.total_debit) - parseFloat(e.total_credit)) < 0.01;
                   return (
                     <tr key={e.id}>
@@ -202,6 +209,7 @@ export default function JournalEntries() {
             </table>
           </div>
         )}
+        <Pagination total={filteredEntries.length} page={page} pageSize={PAGE_SIZE} onChange={setPage} />
       </div>
 
       {/* Create Journal Entry Modal */}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../../api";
 import SuccessAlert from "../../components/SuccessAlert";
 import { printDocument } from "../../utils/printDocument";
+import Pagination from "../../components/Pagination";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(n ?? 0);
@@ -18,6 +19,9 @@ export default function Bills() {
   const [paying, setPaying] = useState(false);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+
+  const PAGE_SIZE = 25;
+  const [page, setPage] = useState(1);
 
   function today() { return new Date().toISOString().split("T")[0]; }
 
@@ -85,6 +89,9 @@ export default function Bills() {
     return matchesSearch && matchesStatus;
   });
 
+  useEffect(() => { setPage(1); }, [search, filterStatus]);
+  const paginated = filteredBills.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <div>
       <SuccessAlert message={success} onClose={() => setSuccess("")} />
@@ -133,7 +140,7 @@ export default function Bills() {
                 </tr>
               </thead>
               <tbody>
-                {filteredBills.map((bill) => (
+                {paginated.map((bill) => (
                   <tr key={bill.id}>
                     <td><strong>BILL-{String(bill.id).padStart(4, "0")}</strong></td>
                     <td>{bill.vendor_name}</td>
@@ -161,6 +168,7 @@ export default function Bills() {
             </table>
           </div>
         )}
+        <Pagination total={filteredBills.length} page={page} pageSize={PAGE_SIZE} onChange={setPage} />
       </div>
 
       {/* View Bill Modal */}

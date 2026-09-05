@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import SuccessAlert from "../components/SuccessAlert";
+import Pagination from "../components/Pagination";
 
 const EMPTY = { name: "", type: "goods", sales_price: "", purchase_price: "", category: "" };
 
@@ -43,6 +44,9 @@ export default function Products() {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [deleteId, setDeleteId] = useState(null);
+
+  const PAGE_SIZE = 25;
+  const [page, setPage] = useState(1);
 
   const load = () => {
     setLoading(true);
@@ -101,6 +105,9 @@ export default function Products() {
     return matchesSearch && matchesType;
   });
 
+  useEffect(() => { setPage(1); }, [search, filterType]);
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <div>
       <SuccessAlert message={success} onClose={() => setSuccess("")} />
@@ -141,7 +148,7 @@ export default function Products() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((p, i) => (
+                {paginated.map((p, i) => (
                   <tr key={p.id}>
                     <td style={{ color: "var(--text-muted)" }}>{i + 1}</td>
                     <td><strong>{p.name}</strong></td>
@@ -161,6 +168,7 @@ export default function Products() {
             </table>
           </div>
         )}
+        <Pagination total={filtered.length} page={page} pageSize={PAGE_SIZE} onChange={setPage} />
       </div>
 
       {showModal && (

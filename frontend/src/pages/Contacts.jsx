@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import SuccessAlert from "../components/SuccessAlert";
+import Pagination from "../components/Pagination";
 
 const EMPTY = { name: "", type: "customer", email: "", mobile: "", city: "", state: "", pincode: "", profile_image: "" };
 
@@ -47,6 +48,9 @@ export default function Contacts() {
   const [filterState, setFilterState] = useState("all");
   const [deleteId, setDeleteId] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
+
+  const PAGE_SIZE = 25;
+  const [page, setPage] = useState(1);
 
   const load = () => {
     setLoading(true);
@@ -137,6 +141,9 @@ export default function Contacts() {
     return matchSearch && matchType && matchCity && matchState;
   });
 
+  useEffect(() => { setPage(1); }, [search, filterType, filterCity, filterState]);
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <div>
       <SuccessAlert message={success} onClose={() => setSuccess("")} />
@@ -186,7 +193,7 @@ export default function Contacts() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((c, i) => (
+                {paginated.map((c, i) => (
                   <tr key={c.id}>
                     <td style={{ color: "var(--text-muted)" }}>{i + 1}</td>
                     <td><strong>{c.name}</strong></td>
@@ -207,9 +214,8 @@ export default function Contacts() {
             </table>
           </div>
         )}
+        <Pagination total={filtered.length} page={page} pageSize={PAGE_SIZE} onChange={setPage} />
       </div>
-
-      {/* Add/Edit Modal */}
       {showModal && (
         <div className="modal-backdrop" onClick={closeModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>

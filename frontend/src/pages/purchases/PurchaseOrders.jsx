@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api";
 import SuccessAlert from "../../components/SuccessAlert";
+import Pagination from "../../components/Pagination";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(n ?? 0);
@@ -19,6 +20,9 @@ export default function PurchaseOrders() {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+
+  const PAGE_SIZE = 25;
+  const [page, setPage] = useState(1);
 
   const [form, setForm] = useState({ vendor_id: "", order_date: today() });
   const [items, setItems] = useState([{ ...EMPTY_ITEM }]);
@@ -147,6 +151,9 @@ export default function PurchaseOrders() {
     return matchesSearch && matchesStatus;
   });
 
+  useEffect(() => { setPage(1); }, [search, filterStatus]);
+  const paginated = filteredOrders.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <div>
       <SuccessAlert message={success} onClose={() => setSuccess("")} />
@@ -194,7 +201,7 @@ export default function PurchaseOrders() {
                 </tr>
               </thead>
               <tbody>
-                {filteredOrders.map((o) => (
+                {paginated.map((o) => (
                   <tr key={o.id}>
                     <td><strong>PO-{String(o.id).padStart(4, "0")}</strong></td>
                     <td>{o.vendor_name}</td>
@@ -223,6 +230,7 @@ export default function PurchaseOrders() {
             </table>
           </div>
         )}
+        <Pagination total={filteredOrders.length} page={page} pageSize={PAGE_SIZE} onChange={setPage} />
       </div>
 
       {/* Create Modal */}

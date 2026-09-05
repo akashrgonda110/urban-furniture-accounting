@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import Pagination from "../components/Pagination";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(n ?? 0);
@@ -12,6 +13,9 @@ export default function Payments() {
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+
+  const PAGE_SIZE = 25;
+  const [page, setPage] = useState(1);
 
   const load = () => {
     setLoading(true);
@@ -41,6 +45,9 @@ export default function Payments() {
     if (dateTo && p.payment_date > dateTo) return false;
     return true;
   });
+
+  useEffect(() => { setPage(1); }, [search, filterType, dateFrom, dateTo]);
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const totalIn = payments
     .filter((p) => p.invoice_id !== null)
@@ -127,7 +134,7 @@ export default function Payments() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((p) => (
+                {paginated.map((p) => (
                   <tr key={p.id}>
                     <td><strong>PMT-{String(p.id).padStart(4, "0")}</strong></td>
                     <td>
@@ -159,6 +166,7 @@ export default function Payments() {
             </table>
           </div>
         )}
+        <Pagination total={filtered.length} page={page} pageSize={PAGE_SIZE} onChange={setPage} />
       </div>
     </div>
   );
