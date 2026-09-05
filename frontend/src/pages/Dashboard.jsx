@@ -52,26 +52,53 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <div className="card">
-          <h3 style={{ marginBottom: 12, fontSize: 14, fontWeight: 600 }}>Quick Actions</h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <Link to="/contacts" className="btn btn-secondary" style={{ justifyContent: "flex-start" }}>👥 Manage Contacts</Link>
-            <Link to="/sales/orders" className="btn btn-secondary" style={{ justifyContent: "flex-start" }}>🛒 New Sales Order</Link>
-            <Link to="/purchases/orders" className="btn btn-secondary" style={{ justifyContent: "flex-start" }}>📋 New Purchase Order</Link>
-            <Link to="/payments" className="btn btn-secondary" style={{ justifyContent: "flex-start" }}>💳 Register Payment</Link>
-          </div>
-        </div>
-        <div className="card">
-          <h3 style={{ marginBottom: 12, fontSize: 14, fontWeight: 600 }}>Business Flow</h3>
-          <div style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 2 }}>
-            <div>1. Add Contacts &amp; Products</div>
-            <div>2. Create Sales / Purchase Orders</div>
-            <div>3. Generate Invoices / Bills</div>
-            <div>4. Register Payments</div>
-            <div>5. View Journal Entries</div>
-            <div>6. Review Financial Reports</div>
-          </div>
+      <div>
+        <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Quick Actions</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
+          {[
+            { to: "/contacts",            icon: "👥", label: "Manage Contacts",  sub: "Add or edit contacts" },
+            { to: "/sales/orders",        icon: "🛒", label: "New Sales Order",  sub: "Create a customer order" },
+            { to: "/purchases/orders",    icon: "📦", label: "Purchase Order",   sub: "Order from a vendor" },
+            { to: "/sales/invoices",      icon: "🧾", label: "View Invoices",    sub: "Customer invoices" },
+            { to: "/purchases/bills",     icon: "📄", label: "View Bills",       sub: "Vendor bills" },
+            { to: "/payments",            icon: "💳", label: "Payments",         sub: "Register a payment" },
+            { to: "/accounting/entries",  icon: "📒", label: "Journal Entries",  sub: "View accounting entries" },
+            { to: "/reports/profit-loss", icon: "📊", label: "Profit & Loss",    sub: "Financial report" },
+          ].map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 14,
+                background: "#fff",
+                border: "1px solid var(--border)",
+                borderRadius: 14,
+                padding: "36px 16px 30px",
+                textDecoration: "none",
+                color: "var(--text)",
+                transition: "box-shadow 0.15s, border-color 0.15s",
+                cursor: "pointer",
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.boxShadow = "0 6px 20px rgba(26,86,219,0.13)";
+                e.currentTarget.style.borderColor = "var(--primary)";
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.boxShadow = "none";
+                e.currentTarget.style.borderColor = "var(--border)";
+              }}
+            >
+              <span style={{ fontSize: 58, lineHeight: 1 }}>{item.icon}</span>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 5 }}>{item.label}</div>
+                <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{item.sub}</div>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
     </div>
