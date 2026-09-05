@@ -1,5 +1,6 @@
 ﻿import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { defaultRoute } from "../context/permissions";
 import { useAuth } from "../context/AuthContext";
 import AppLogo from "../components/AppLogo";
 
@@ -35,7 +36,7 @@ export default function Login() {
         return;
       }
       login(data.token, data.user);
-      navigate("/", { replace: true });
+      navigate(defaultRoute(data.user.role), { replace: true });
     } catch {
       setError("Cannot connect to server. Make sure the backend is running.");
     } finally {
@@ -219,4 +220,6 @@ const S = {
     color: "#999",
   },
 };
+
+
 

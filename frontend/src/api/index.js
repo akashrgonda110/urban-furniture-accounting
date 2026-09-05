@@ -1,4 +1,4 @@
-const BASE = "http://localhost:5000/api";
+﻿const BASE = "http://localhost:5000/api";
 
 async function request(path, options = {}) {
   const res = await fetch(`${BASE}${path}`, {
@@ -89,4 +89,8 @@ export const api = {
   getBalanceSheet: () => request("/reports/balance-sheet"),
   getProfitLoss: () => request("/reports/profit-loss"),
   getBudgetReport: () => request("/reports/budget"),
+  // User Management (admin only)
+  getUsers: () => request("/users"),
+  linkContact: (userId, contactId) => request(`/users/${userId}/link-contact`, { method: "PATCH", body: JSON.stringify({ contact_id: contactId }) }),
 };
+

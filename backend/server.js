@@ -1,4 +1,4 @@
-const express = require("express");
+﻿const express = require("express");
 const cors = require("cors");
 const pool = require("./db");
 
@@ -19,6 +19,7 @@ app.use("/api/payments", require("./routes/payments"));
 app.use("/api/accounting", require("./routes/accounting"));
 app.use("/api/analytic", require("./routes/analytic"));
 app.use("/api/budgets", require("./routes/budgets"));
+app.use("/api/users", require("./routes/users"));
 app.use("/api/reports", require("./routes/reports"));
 
 app.get("/", (req, res) => {
@@ -39,3 +40,5 @@ const PORT = 5000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+
+

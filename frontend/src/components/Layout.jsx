@@ -1,29 +1,31 @@
-import Sidebar from "./Sidebar";
+﻿import Sidebar from "./Sidebar";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const PAGE_TITLES = {
-  "/": "Dashboard",
-  "/contacts": "Contacts",
-  "/products": "Products",
-  "/sales/orders": "Sales Orders",
-  "/sales/invoices": "Invoices",
-  "/purchases/orders": "Purchase Orders",
-  "/purchases/bills": "Bills",
-  "/payments": "Payments",
-  "/accounting/accounts": "Chart of Accounts",
-  "/accounting/journals": "Journals",
-  "/accounting/entries": "Journal Entries",
-  "/analytic": "Analytic Accounts",
-  "/budgets": "Budgets",
-  "/reports/balance-sheet": "Balance Sheet",
-  "/reports/profit-loss": "Profit & Loss",
-  "/reports/budget": "Budget Report",
+  "/":                       "Dashboard",
+  "/my-portal":              "My Portal",
+  "/admin/users":            "User Management",
+  "/contacts":               "Contacts",
+  "/products":               "Products",
+  "/sales/orders":           "Sales Orders",
+  "/sales/invoices":         "Invoices",
+  "/purchases/orders":       "Purchase Orders",
+  "/purchases/bills":        "Bills",
+  "/payments":               "Payments",
+  "/accounting/accounts":    "Chart of Accounts",
+  "/accounting/journals":    "Journals",
+  "/accounting/entries":     "Journal Entries",
+  "/analytic":               "Analytic Accounts",
+  "/budgets":                "Budgets",
+  "/reports/balance-sheet":  "Balance Sheet",
+  "/reports/profit-loss":    "Profit & Loss",
+  "/reports/budget":         "Budget Report",
 };
 
 const ROLE_LABELS = {
-  admin: "Admin",
-  accountant: "Accountant",
+  admin:        "Admin",
+  accountant:   "Accountant",
   contact_user: "Contact User",
 };
 
@@ -64,3 +66,5 @@ export default function Layout({ children }) {
     </div>
   );
 }
+
+
