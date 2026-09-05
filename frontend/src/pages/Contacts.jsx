@@ -29,11 +29,6 @@ function validateContact(form) {
   if (form.pincode && !/^\d{4,10}$/.test(form.pincode.trim()))
     return "Pincode must be 4–10 digits.";
 
-  if (form.profile_image && form.profile_image.trim()) {
-    try { new URL(form.profile_image.trim()); }
-    catch { return "Profile Image URL is not a valid URL."; }
-  }
-
   return null;
 }
 
@@ -48,6 +43,8 @@ export default function Contacts() {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
+  const [filterCity, setFilterCity] = useState("all");
+  const [filterState, setFilterState] = useState("all");
   const [deleteId, setDeleteId] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
 
@@ -69,6 +66,27 @@ export default function Contacts() {
     setForm((f) => ({ ...f, [name]: value }));
     // Clear field error on change
     if (fieldErrors[name]) setFieldErrors((fe) => ({ ...fe, [name]: "" }));
+  };
+
+  // Convert uploaded file to base64 and store in profile_image
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const allowed = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
+    if (!allowed.includes(file.type)) {
+      setError("Only JPG, PNG, or PDF files are allowed.");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError("File size must be under 2 MB.");
+      e.target.value = "";
+      return;
+    }
+    setError("");
+    const reader = new FileReader();
+    reader.onload = (ev) => setForm((f) => ({ ...f, profile_image: ev.target.result }));
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e) => {
@@ -106,11 +124,17 @@ export default function Contacts() {
     }
   };
 
+  // Unique city and state lists for dropdowns (sorted, non-empty)
+  const cities  = [...new Set(contacts.map((c) => c.city).filter(Boolean))].sort();
+  const states  = [...new Set(contacts.map((c) => c.state).filter(Boolean))].sort();
+
   const filtered = contacts.filter((c) => {
     const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) ||
       (c.email || "").toLowerCase().includes(search.toLowerCase());
-    const matchType = filterType === "all" || c.type === filterType;
-    return matchSearch && matchType;
+    const matchType  = filterType  === "all" || c.type === filterType;
+    const matchCity  = filterCity  === "all" || (c.city  || "").toLowerCase() === filterCity.toLowerCase();
+    const matchState = filterState === "all" || (c.state || "").toLowerCase() === filterState.toLowerCase();
+    return matchSearch && matchType && matchCity && matchState;
   });
 
   return (
@@ -126,6 +150,14 @@ export default function Contacts() {
             <option value="customer">Customer</option>
             <option value="vendor">Vendor</option>
             <option value="both">Both</option>
+          </select>
+          <select value={filterCity} onChange={(e) => setFilterCity(e.target.value)} style={{ width: 130 }}>
+            <option value="all">All Cities</option>
+            {cities.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select value={filterState} onChange={(e) => setFilterState(e.target.value)} style={{ width: 140 }}>
+            <option value="all">All States</option>
+            {states.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
         <div className="toolbar-right">
@@ -262,14 +294,42 @@ export default function Contacts() {
                     <span className="form-hint">4–10 digits only.</span>
                   </div>
                   <div className="form-group span-2">
-                    <label>Profile Image URL</label>
+                    <label>Profile Image</label>
                     <input
-                      name="profile_image"
-                      value={form.profile_image}
-                      onChange={handleChange}
-                      placeholder="https://example.com/photo.jpg"
-                      maxLength={500}
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.pdf"
+                      onChange={handleFileChange}
+                      style={{ padding: "6px 0" }}
                     />
+                    <span className="form-hint">Accepted: JPG, PNG, PDF · Max 2 MB</span>
+                    {form.profile_image && form.profile_image.startsWith("data:image") && (
+                      <div style={{ marginTop: 8 }}>
+                        <img
+                          src={form.profile_image}
+                          alt="Preview"
+                          style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 6, border: "1px solid var(--border)" }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setForm((f) => ({ ...f, profile_image: "" }))}
+                          style={{ marginLeft: 10, background: "none", border: "none", color: "var(--danger)", cursor: "pointer", fontSize: 12 }}
+                        >
+                          ✕ Remove
+                        </button>
+                      </div>
+                    )}
+                    {form.profile_image && form.profile_image.startsWith("data:application/pdf") && (
+                      <div style={{ marginTop: 8, fontSize: 12, color: "var(--text-muted)" }}>
+                        📄 PDF uploaded
+                        <button
+                          type="button"
+                          onClick={() => setForm((f) => ({ ...f, profile_image: "" }))}
+                          style={{ marginLeft: 10, background: "none", border: "none", color: "var(--danger)", cursor: "pointer", fontSize: 12 }}
+                        >
+                          ✕ Remove
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
