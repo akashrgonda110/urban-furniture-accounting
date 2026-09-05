@@ -234,7 +234,7 @@ export default function Budgets() {
                       name="responsible_person"
                       value={form.responsible_person}
                       onChange={handleChange}
-                      placeholder="e.g. Rajesh Kumar"
+                      placeholder="e.g. Akash Regonda"
                     />
                   </div>
                 </div>

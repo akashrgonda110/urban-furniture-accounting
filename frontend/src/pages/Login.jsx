@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import AppLogo from "../components/AppLogo";
 
 const API = "http://localhost:5000/api";
 
@@ -17,7 +18,7 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.email || !form.password) {
-      setError("Email and password are required");
+      setError("Login Id and Password are required.");
       return;
     }
     setLoading(true);
@@ -30,7 +31,7 @@ export default function Login() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Login failed");
+        setError(data.error || "Invalid credentials. Please try again.");
         return;
       }
       login(data.token, data.user);
@@ -43,33 +44,39 @@ export default function Login() {
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <div style={styles.logo}>🪑</div>
-          <h1 style={styles.title}>Urban Furniture</h1>
-          <p style={styles.subtitle}>Accounting System</p>
+    <div style={S.page}>
+      {/* Page title above card */}
+      <p style={S.pageTitle}>Login Page</p>
+
+      <div style={S.card}>
+        {/* Logo area */}
+        <div style={S.logoBox}>
+          <AppLogo width={210} />
         </div>
 
-        <h2 style={styles.formTitle}>Sign In</h2>
+        {/* Error message */}
+        {error && (
+          <p style={S.errorMsg}>{error}</p>
+        )}
 
-        {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-group" style={{ marginBottom: 14 }}>
-            <label>Email Address</label>
+        {/* Form */}
+        <form onSubmit={handleSubmit} style={S.form}>
+          <div style={S.fieldRow}>
+            <label style={S.label}>Login Id</label>
             <input
               name="email"
               type="email"
               value={form.email}
               onChange={handleChange}
-              placeholder="you@example.com"
+              placeholder="Enter your email"
               autoComplete="email"
               required
+              style={S.input}
             />
           </div>
-          <div className="form-group" style={{ marginBottom: 20 }}>
-            <label>Password</label>
+
+          <div style={S.fieldRow}>
+            <label style={S.label}>Password</label>
             <input
               name="password"
               type="password"
@@ -78,87 +85,132 @@ export default function Login() {
               placeholder="Enter your password"
               autoComplete="current-password"
               required
+              style={S.input}
             />
           </div>
-          <button
-            type="submit"
-            className="btn btn-primary"
-            style={{ width: "100%", justifyContent: "center", padding: "10px" }}
-            disabled={loading}
-          >
-            {loading ? "Signing in…" : "Sign In"}
-          </button>
+
+          <div style={S.btnRow}>
+            <button type="submit" style={S.signInBtn} disabled={loading}>
+              {loading ? "SIGNING IN..." : "SIGN IN"}
+            </button>
+          </div>
         </form>
 
-        <div style={styles.divider} />
-
-        <p style={styles.switchText}>
-          Don't have an account?{" "}
-          <Link to="/signup" style={styles.link}>Create Account</Link>
-        </p>
+        {/* Footer links */}
+        <div style={S.footer}>
+          <span style={S.footerLink}>Forgot Password</span>
+          <span style={S.separator}>|</span>
+          <Link to="/signup" style={S.footerLink}>Sign Up</Link>
+        </div>
       </div>
     </div>
   );
 }
 
-const styles = {
+const S = {
   page: {
     minHeight: "100vh",
-    background: "var(--bg)",
+    background: "#f5f5f5",
     display: "flex",
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    padding: 16,
+    padding: "20px 16px",
+    fontFamily: "Arial, sans-serif",
+  },
+  pageTitle: {
+    fontSize: 15,
+    fontWeight: 600,
+    color: "#333",
+    marginBottom: 14,
+    letterSpacing: "0.3px",
   },
   card: {
     background: "#fff",
-    border: "1px solid var(--border)",
-    borderRadius: 8,
-    padding: "32px 36px",
+    border: "2px solid #888",
+    borderRadius: 18,
+    padding: "32px 40px 28px",
     width: "100%",
     maxWidth: 400,
-    boxShadow: "0 4px 24px rgba(0,0,0,0.07)",
+    boxSizing: "border-box",
   },
-  header: {
+  logoBox: {
+    border: "2px solid #888",
+    borderRadius: 10,
     textAlign: "center",
+    padding: "12px 16px",
     marginBottom: 28,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  logo: {
-    fontSize: 40,
-    marginBottom: 8,
+  errorMsg: {
+    background: "#fff3f3",
+    border: "1px solid #e0a0a0",
+    borderRadius: 6,
+    padding: "8px 12px",
+    fontSize: 13,
+    color: "#c0392b",
+    marginBottom: 16,
+    textAlign: "center",
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 700,
-    color: "var(--text)",
-    margin: "0 0 4px",
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 0,
   },
-  subtitle: {
-    fontSize: 12,
-    color: "var(--text-muted)",
-    textTransform: "uppercase",
-    letterSpacing: "1px",
-    margin: 0,
+  fieldRow: {
+    display: "flex",
+    flexDirection: "column",
+    marginBottom: 16,
   },
-  formTitle: {
-    fontSize: 16,
+  label: {
+    fontSize: 13,
     fontWeight: 600,
-    marginBottom: 18,
-    color: "var(--text)",
+    color: "#333",
+    marginBottom: 5,
   },
-  divider: {
-    borderTop: "1px solid var(--border)",
-    margin: "20px 0",
+  input: {
+    border: "1.5px solid #888",
+    borderRadius: 6,
+    padding: "9px 12px",
+    fontSize: 13,
+    color: "#222",
+    background: "#fff",
+    outline: "none",
+    width: "100%",
+    boxSizing: "border-box",
   },
-  switchText: {
+  btnRow: {
+    textAlign: "center",
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  signInBtn: {
+    background: "#fff",
+    border: "2px solid #555",
+    borderRadius: 8,
+    padding: "10px 48px",
+    fontSize: 14,
+    fontWeight: 700,
+    color: "#222",
+    cursor: "pointer",
+    letterSpacing: "1px",
+  },
+  footer: {
+    marginTop: 22,
     textAlign: "center",
     fontSize: 13,
-    color: "var(--text-muted)",
-    margin: 0,
+    color: "#555",
   },
-  link: {
-    color: "var(--primary)",
+  footerLink: {
+    cursor: "pointer",
+    color: "#333",
     textDecoration: "none",
-    fontWeight: 600,
+    fontWeight: 500,
+  },
+  separator: {
+    margin: "0 10px",
+    color: "#999",
   },
 };
