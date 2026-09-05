@@ -1,122 +1,92 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import Layout from "./components/Layout";
 
-function App() {
-  const [count, setCount] = useState(0)
+// Auth pages
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+// App pages
+import Dashboard from "./pages/Dashboard";
+import Contacts from "./pages/Contacts";
+import Products from "./pages/Products";
 
-      <div className="ticks"></div>
+import SalesOrders from "./pages/sales/SalesOrders";
+import Invoices from "./pages/sales/Invoices";
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+import PurchaseOrders from "./pages/purchases/PurchaseOrders";
+import Bills from "./pages/purchases/Bills";
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+import Payments from "./pages/Payments";
+
+import ChartOfAccounts from "./pages/accounting/ChartOfAccounts";
+import Journals from "./pages/accounting/Journals";
+import JournalEntries from "./pages/accounting/JournalEntries";
+
+import AnalyticAccounts from "./pages/AnalyticAccounts";
+import Budgets from "./pages/Budgets";
+
+import BalanceSheet from "./pages/reports/BalanceSheet";
+import ProfitLoss from "./pages/reports/ProfitLoss";
+import BudgetReport from "./pages/reports/BudgetReport";
+
+// Redirects unauthenticated users to /login
+function PrivateRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="loading" style={{ marginTop: 80 }}>Loading…</div>;
+  return user ? children : <Navigate to="/login" replace />;
 }
 
-export default App
+// Redirects already-logged-in users away from /login and /signup
+function PublicRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="loading" style={{ marginTop: 80 }}>Loading…</div>;
+  return user ? <Navigate to="/" replace /> : children;
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      {/* Public routes */}
+      <Route path="/login"  element={<PublicRoute><Login /></PublicRoute>} />
+      <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
+
+      {/* Protected routes — wrapped in Layout */}
+      <Route path="/" element={<PrivateRoute><Layout><Dashboard /></Layout></PrivateRoute>} />
+      <Route path="/contacts" element={<PrivateRoute><Layout><Contacts /></Layout></PrivateRoute>} />
+      <Route path="/products" element={<PrivateRoute><Layout><Products /></Layout></PrivateRoute>} />
+
+      <Route path="/sales/orders"   element={<PrivateRoute><Layout><SalesOrders /></Layout></PrivateRoute>} />
+      <Route path="/sales/invoices" element={<PrivateRoute><Layout><Invoices /></Layout></PrivateRoute>} />
+
+      <Route path="/purchases/orders" element={<PrivateRoute><Layout><PurchaseOrders /></Layout></PrivateRoute>} />
+      <Route path="/purchases/bills"  element={<PrivateRoute><Layout><Bills /></Layout></PrivateRoute>} />
+
+      <Route path="/payments" element={<PrivateRoute><Layout><Payments /></Layout></PrivateRoute>} />
+
+      <Route path="/accounting/accounts" element={<PrivateRoute><Layout><ChartOfAccounts /></Layout></PrivateRoute>} />
+      <Route path="/accounting/journals" element={<PrivateRoute><Layout><Journals /></Layout></PrivateRoute>} />
+      <Route path="/accounting/entries"  element={<PrivateRoute><Layout><JournalEntries /></Layout></PrivateRoute>} />
+
+      <Route path="/analytic" element={<PrivateRoute><Layout><AnalyticAccounts /></Layout></PrivateRoute>} />
+      <Route path="/budgets"  element={<PrivateRoute><Layout><Budgets /></Layout></PrivateRoute>} />
+
+      <Route path="/reports/balance-sheet" element={<PrivateRoute><Layout><BalanceSheet /></Layout></PrivateRoute>} />
+      <Route path="/reports/profit-loss"   element={<PrivateRoute><Layout><ProfitLoss /></Layout></PrivateRoute>} />
+      <Route path="/reports/budget"        element={<PrivateRoute><Layout><BudgetReport /></Layout></PrivateRoute>} />
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}
