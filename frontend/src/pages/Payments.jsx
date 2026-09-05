@@ -9,6 +9,9 @@ export default function Payments() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filterType, setFilterType] = useState("all"); // all | invoice | bill
+  const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   const load = () => {
     setLoading(true);
@@ -20,8 +23,22 @@ export default function Payments() {
   useEffect(() => { load(); }, []);
 
   const filtered = payments.filter((p) => {
-    if (filterType === "invoice") return p.invoice_id !== null;
-    if (filterType === "bill") return p.bill_id !== null;
+    if (filterType === "invoice" && p.invoice_id === null) return false;
+    if (filterType === "bill" && p.bill_id === null) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      const refStr = p.invoice_id
+        ? `inv-${String(p.invoice_ref || p.invoice_id).padStart(4, "0")}`
+        : `bill-${String(p.bill_ref || p.bill_id).padStart(4, "0")}`;
+      const matchesSearch =
+        (p.contact_name || "").toLowerCase().includes(q) ||
+        (p.reference || "").toLowerCase().includes(q) ||
+        `pmt-${String(p.id).padStart(4, "0")}`.includes(q) ||
+        refStr.includes(q);
+      if (!matchesSearch) return false;
+    }
+    if (dateFrom && p.payment_date < dateFrom) return false;
+    if (dateTo && p.payment_date > dateTo) return false;
     return true;
   });
 
@@ -55,11 +72,31 @@ export default function Payments() {
 
       <div className="toolbar">
         <div className="toolbar-left">
+          <input
+            placeholder="Search by contact, reference, PMT-XXXX…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: 260 }}
+          />
           <select value={filterType} onChange={(e) => setFilterType(e.target.value)} style={{ width: 160 }}>
             <option value="all">All Payments</option>
             <option value="invoice">Customer Receipts</option>
             <option value="bill">Vendor Payments</option>
           </select>
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            title="From date"
+            style={{ width: 140 }}
+          />
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            title="To date"
+            style={{ width: 140 }}
+          />
           <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{filtered.length} record{filtered.length !== 1 ? "s" : ""}</span>
         </div>
         <div className="toolbar-right">

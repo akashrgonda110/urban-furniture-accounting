@@ -16,6 +16,7 @@ export default function ChartOfAccounts() {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
+  const [filterActive, setFilterActive] = useState("all");
 
   const load = () => {
     setLoading(true);
@@ -66,7 +67,11 @@ export default function ChartOfAccounts() {
   const filtered = accounts.filter((a) => {
     const matchSearch = a.account_name.toLowerCase().includes(search.toLowerCase());
     const matchType = filterType === "all" || a.account_type === filterType;
-    return matchSearch && matchType;
+    const matchActive =
+      filterActive === "all" ||
+      (filterActive === "active" && a.is_active) ||
+      (filterActive === "inactive" && !a.is_active);
+    return matchSearch && matchType && matchActive;
   });
 
   // Group by type for display
@@ -86,6 +91,11 @@ export default function ChartOfAccounts() {
           <select value={filterType} onChange={(e) => setFilterType(e.target.value)} style={{ width: 140 }}>
             <option value="all">All Types</option>
             {TYPES.map((t) => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+          </select>
+          <select value={filterActive} onChange={(e) => setFilterActive(e.target.value)} style={{ width: 130 }}>
+            <option value="all">All</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
           </select>
         </div>
         <div className="toolbar-right">

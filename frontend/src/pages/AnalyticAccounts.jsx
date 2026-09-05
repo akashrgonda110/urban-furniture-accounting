@@ -15,6 +15,7 @@ export default function AnalyticAccounts() {
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState("all");
 
   const load = () => {
     setLoading(true);
@@ -63,9 +64,11 @@ export default function AnalyticAccounts() {
     }
   };
 
-  const filtered = accounts.filter((a) =>
-    a.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = accounts.filter((a) => {
+    const matchesSearch = a.name.toLowerCase().includes(search.toLowerCase());
+    const matchesType = filterType === "all" || a.type === filterType;
+    return matchesSearch && matchesType;
+  });
 
   const incomeCount = accounts.filter((a) => a.type === "income").length;
   const expenseCount = accounts.filter((a) => a.type === "expense").length;
@@ -98,6 +101,11 @@ export default function AnalyticAccounts() {
             onChange={(e) => setSearch(e.target.value)}
             style={{ width: 240 }}
           />
+          <select value={filterType} onChange={(e) => setFilterType(e.target.value)} style={{ width: 140 }}>
+            <option value="all">All</option>
+            <option value="income">Income</option>
+            <option value="expense">Expense</option>
+          </select>
         </div>
         <div className="toolbar-right">
           <button className="btn btn-primary" onClick={openAdd}>+ Add Analytic Account</button>

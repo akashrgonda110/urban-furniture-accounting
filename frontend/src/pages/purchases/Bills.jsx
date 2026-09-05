@@ -15,6 +15,8 @@ export default function Bills() {
   const [journals, setJournals] = useState([]);
   const [payForm, setPayForm] = useState({ journal_id: "", payment_date: today(), amount: "", payment_method: "bank", reference: "" });
   const [paying, setPaying] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
 
   function today() { return new Date().toISOString().split("T")[0]; }
 
@@ -73,6 +75,15 @@ export default function Bills() {
   const statusOrder = { unpaid: 0, partially_paid: 1, paid: 2, cancelled: 3 };
   const sorted = [...bills].sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
 
+  const filteredBills = sorted.filter((bill) => {
+    const q = search.toLowerCase();
+    const matchesSearch =
+      (bill.vendor_name || "").toLowerCase().includes(q) ||
+      `bill-${String(bill.id).padStart(4, "0")}`.includes(q);
+    const matchesStatus = filterStatus === "all" || bill.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div>
       <SuccessAlert message={success} onClose={() => setSuccess("")} />
@@ -80,7 +91,19 @@ export default function Bills() {
 
       <div className="toolbar">
         <div className="toolbar-left">
-          <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{bills.length} bill{bills.length !== 1 ? "s" : ""}</span>
+          <input
+            placeholder="Search by vendor or BILL-XXXX…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: 260 }}
+          />
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{ width: 160 }}>
+            <option value="all">All Status</option>
+            <option value="unpaid">Unpaid</option>
+            <option value="partially_paid">Partially Paid</option>
+            <option value="paid">Paid</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
         </div>
         <div className="toolbar-right">
           <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Bills are created from Purchase Orders</span>
@@ -109,7 +132,7 @@ export default function Bills() {
                 </tr>
               </thead>
               <tbody>
-                {sorted.map((bill) => (
+                {filteredBills.map((bill) => (
                   <tr key={bill.id}>
                     <td><strong>BILL-{String(bill.id).padStart(4, "0")}</strong></td>
                     <td>{bill.vendor_name}</td>

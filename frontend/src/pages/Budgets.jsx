@@ -25,6 +25,8 @@ export default function Budgets() {
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+  const [search, setSearch] = useState("");
+  const [filterAnalytic, setFilterAnalytic] = useState("all");
 
   const load = () => {
     setLoading(true);
@@ -92,6 +94,17 @@ export default function Budgets() {
     }
   };
 
+  const filteredBudgets = budgets.filter((b) => {
+    const q = search.toLowerCase();
+    const matchesSearch =
+      !q ||
+      (b.name || "").toLowerCase().includes(q) ||
+      (b.responsible_person || "").toLowerCase().includes(q);
+    const matchesAnalytic =
+      filterAnalytic === "all" || String(b.analytic_account_id) === filterAnalytic;
+    return matchesSearch && matchesAnalytic;
+  });
+
   const totalPlanned = budgets.reduce((s, b) => s + parseFloat(b.planned_amount || 0), 0);
 
   return (
@@ -112,9 +125,18 @@ export default function Budgets() {
 
       <div className="toolbar">
         <div className="toolbar-left">
-          <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
-            {budgets.length} budget{budgets.length !== 1 ? "s" : ""}
-          </span>
+          <input
+            placeholder="Search by budget name or responsible…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: 280 }}
+          />
+          <select value={filterAnalytic} onChange={(e) => setFilterAnalytic(e.target.value)} style={{ width: 200 }}>
+            <option value="all">All Accounts</option>
+            {analyticAccounts.map((a) => (
+              <option key={a.id} value={String(a.id)}>{a.name}</option>
+            ))}
+          </select>
         </div>
         <div className="toolbar-right">
           {analyticAccounts.length === 0 && (
@@ -148,7 +170,7 @@ export default function Budgets() {
                 </tr>
               </thead>
               <tbody>
-                {budgets.map((b, i) => (
+                {filteredBudgets.map((b, i) => (
                   <tr key={b.id}>
                     <td style={{ color: "var(--text-muted)" }}>{i + 1}</td>
                     <td><strong>{b.name}</strong></td>

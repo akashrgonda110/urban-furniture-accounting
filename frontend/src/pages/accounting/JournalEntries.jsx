@@ -17,6 +17,10 @@ export default function JournalEntries() {
   const [showCreate, setShowCreate] = useState(false);
   const [viewEntry, setViewEntry] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterJournal, setFilterJournal] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   const [form, setForm] = useState({ journal_id: "", entry_date: today(), reference: "", description: "" });
   const [lines, setLines] = useState([{ ...EMPTY_LINE }, { ...EMPTY_LINE }]);
@@ -93,6 +97,20 @@ export default function JournalEntries() {
     } finally { setSaving(false); }
   };
 
+  const filteredEntries = entries.filter((e) => {
+    const q = search.toLowerCase();
+    const matchesSearch =
+      !q ||
+      (e.description || "").toLowerCase().includes(q) ||
+      (e.reference || "").toLowerCase().includes(q) ||
+      `je-${String(e.id).padStart(4, "0")}`.includes(q);
+    const matchesJournal = filterJournal === "all" || String(e.journal_id) === filterJournal;
+    const entryDate = e.entry_date ? e.entry_date.split("T")[0] : "";
+    const matchesFrom = !dateFrom || entryDate >= dateFrom;
+    const matchesTo = !dateTo || entryDate <= dateTo;
+    return matchesSearch && matchesJournal && matchesFrom && matchesTo;
+  });
+
   return (
     <div>
       <SuccessAlert message={success} onClose={() => setSuccess("")} />
@@ -100,7 +118,32 @@ export default function JournalEntries() {
 
       <div className="toolbar">
         <div className="toolbar-left">
-          <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{entries.length} entr{entries.length !== 1 ? "ies" : "y"}</span>
+          <input
+            placeholder="Search by description, reference, JE-XXXX…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: 280 }}
+          />
+          <select value={filterJournal} onChange={(e) => setFilterJournal(e.target.value)} style={{ width: 180 }}>
+            <option value="all">All Journals</option>
+            {journals.map((j) => (
+              <option key={j.id} value={String(j.id)}>{j.journal_name}</option>
+            ))}
+          </select>
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            title="From date"
+            style={{ width: 140 }}
+          />
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            title="To date"
+            style={{ width: 140 }}
+          />
         </div>
         <div className="toolbar-right">
           <button className="btn btn-primary" onClick={openCreate}>+ New Journal Entry</button>
@@ -133,7 +176,7 @@ export default function JournalEntries() {
                 </tr>
               </thead>
               <tbody>
-                {entries.map((e) => {
+                {filteredEntries.map((e) => {
                   const balanced = Math.abs(parseFloat(e.total_debit) - parseFloat(e.total_credit)) < 0.01;
                   return (
                     <tr key={e.id}>

@@ -15,6 +15,8 @@ export default function Invoices() {
   const [journals, setJournals] = useState([]);
   const [payForm, setPayForm] = useState({ journal_id: "", payment_date: today(), amount: "", payment_method: "cash", reference: "" });
   const [paying, setPaying] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
 
   function today() { return new Date().toISOString().split("T")[0]; }
 
@@ -73,6 +75,15 @@ export default function Invoices() {
   const statusOrder = { unpaid: 0, partially_paid: 1, paid: 2, cancelled: 3 };
   const sorted = [...invoices].sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
 
+  const filteredInvoices = sorted.filter((inv) => {
+    const q = search.toLowerCase();
+    const matchesSearch =
+      (inv.customer_name || "").toLowerCase().includes(q) ||
+      `inv-${String(inv.id).padStart(4, "0")}`.includes(q);
+    const matchesStatus = filterStatus === "all" || inv.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div>
       <SuccessAlert message={success} onClose={() => setSuccess("")} />
@@ -80,7 +91,19 @@ export default function Invoices() {
 
       <div className="toolbar">
         <div className="toolbar-left">
-          <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{invoices.length} invoice{invoices.length !== 1 ? "s" : ""}</span>
+          <input
+            placeholder="Search by customer or INV-XXXX…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: 260 }}
+          />
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{ width: 160 }}>
+            <option value="all">All Status</option>
+            <option value="unpaid">Unpaid</option>
+            <option value="partially_paid">Partially Paid</option>
+            <option value="paid">Paid</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
         </div>
         <div className="toolbar-right">
           <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Invoices are created from Sales Orders</span>
@@ -109,7 +132,7 @@ export default function Invoices() {
                 </tr>
               </thead>
               <tbody>
-                {sorted.map((inv) => (
+                {filteredInvoices.map((inv) => (
                   <tr key={inv.id}>
                     <td><strong>INV-{String(inv.id).padStart(4, "0")}</strong></td>
                     <td>{inv.customer_name}</td>

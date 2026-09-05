@@ -41,6 +41,7 @@ export default function Products() {
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState("all");
   const [deleteId, setDeleteId] = useState(null);
 
   const load = () => {
@@ -92,10 +93,13 @@ export default function Products() {
     }
   };
 
-  const filtered = products.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    (p.category || "").toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = products.filter((p) => {
+    const matchesSearch =
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      (p.category || "").toLowerCase().includes(search.toLowerCase());
+    const matchesType = filterType === "all" || p.type === filterType;
+    return matchesSearch && matchesType;
+  });
 
   return (
     <div>
@@ -105,6 +109,12 @@ export default function Products() {
       <div className="toolbar">
         <div className="toolbar-left">
           <input placeholder="Search products…" value={search} onChange={(e) => setSearch(e.target.value)} style={{ width: 220 }} />
+          <select value={filterType} onChange={(e) => setFilterType(e.target.value)} style={{ width: 140 }}>
+            <option value="all">All Types</option>
+            <option value="goods">Goods</option>
+            <option value="service">Service</option>
+            <option value="combo">Combo</option>
+          </select>
         </div>
         <div className="toolbar-right">
           <button className="btn btn-primary" onClick={openAdd}>+ Add Product</button>

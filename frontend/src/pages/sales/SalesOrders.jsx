@@ -17,6 +17,8 @@ export default function SalesOrders() {
   const [showCreate, setShowCreate] = useState(false);
   const [viewOrder, setViewOrder] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
 
   // Form state
   const [form, setForm] = useState({ customer_id: "", order_date: today() });
@@ -139,6 +141,15 @@ export default function SalesOrders() {
     } catch (err) { setError(err.message); }
   };
 
+  const filteredOrders = orders.filter((o) => {
+    const q = search.toLowerCase();
+    const matchesSearch =
+      (o.customer_name || "").toLowerCase().includes(q) ||
+      `so-${String(o.id).padStart(4, "0")}`.includes(q);
+    const matchesStatus = filterStatus === "all" || o.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div>
       <SuccessAlert message={success} onClose={() => setSuccess("")} />
@@ -146,7 +157,19 @@ export default function SalesOrders() {
 
       <div className="toolbar">
         <div className="toolbar-left">
-          <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{orders.length} order{orders.length !== 1 ? "s" : ""}</span>
+          <input
+            placeholder="Search by customer or SO-XXXX…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: 260 }}
+          />
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{ width: 150 }}>
+            <option value="all">All Status</option>
+            <option value="draft">Draft</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="invoiced">Invoiced</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
         </div>
         <div className="toolbar-right">
           <button className="btn btn-primary" onClick={openCreate}>+ New Sales Order</button>
@@ -156,8 +179,8 @@ export default function SalesOrders() {
       <div className="card" style={{ padding: 0 }}>
         {loading ? (
           <div className="loading">Loading…</div>
-        ) : orders.length === 0 ? (
-          <div className="empty">No sales orders yet. Create your first order.</div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="empty">No sales orders found.</div>
         ) : (
           <div className="table-wrap">
             <table>
@@ -174,7 +197,7 @@ export default function SalesOrders() {
                 </tr>
               </thead>
               <tbody>
-                {orders.map((o) => (
+                {filteredOrders.map((o) => (
                   <tr key={o.id}>
                     <td><strong>SO-{String(o.id).padStart(4, "0")}</strong></td>
                     <td>{o.customer_name}</td>
