@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AppLogo from "../components/AppLogo";
@@ -98,7 +98,12 @@ export default function Login() {
 
         {/* Footer links */}
         <div style={S.footer}>
-          <span style={S.footerLink}>Forgot Password</span>
+          <span
+            style={S.footerLink}
+            onClick={() => alert("Password reset is not available. Please contact your administrator to reset your password.")}
+          >
+            Forgot Password
+          </span>
           <span style={S.separator}>|</span>
           <Link to="/signup" style={S.footerLink}>Sign Up</Link>
         </div>
@@ -214,3 +219,4 @@ const S = {
     color: "#999",
   },
 };
+

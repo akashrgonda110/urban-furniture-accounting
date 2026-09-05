@@ -211,9 +211,7 @@ export default function Signup() {
 
         {/* Footer */}
         <div style={S.footer}>
-          <span style={S.footerLink}>Forgot Password</span>
-          <span style={S.separator}>|</span>
-          <Link to="/signup" style={S.footerLink}>Sign Up</Link>
+          <Link to="/login" style={S.footerLink}>Already have an account? Sign In</Link>
         </div>
       </div>
     </div>
@@ -361,3 +359,4 @@ const S = {
     color: "#999",
   },
 };
+

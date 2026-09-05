@@ -96,12 +96,7 @@ export default function Budgets() {
 
   return (
     <div>
-      {success && (
-        <div className="alert alert-success">
-          {success}
-          <button onClick={() => setSuccess("")} style={{ float: "right", background: "none", border: "none", cursor: "pointer" }}>✕</button>
-        </div>
-      )}
+      <SuccessAlert message={success} onClose={() => setSuccess("")} />
       {error && !showModal && <div className="alert alert-error">{error}</div>}
 
       <div className="stat-grid" style={{ marginBottom: 20 }}>

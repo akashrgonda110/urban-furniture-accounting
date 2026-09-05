@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api";
+import SuccessAlert from "../../components/SuccessAlert";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(n ?? 0);
@@ -74,12 +75,7 @@ export default function Invoices() {
 
   return (
     <div>
-      {success && (
-        <div className="alert alert-success">
-          {success}
-          <button onClick={() => setSuccess("")} style={{ float: "right", background: "none", border: "none", cursor: "pointer" }}>✕</button>
-        </div>
-      )}
+      <SuccessAlert message={success} onClose={() => setSuccess("")} />
       {error && !showPayModal && !viewInvoice && <div className="alert alert-error">{error}</div>}
 
       <div className="toolbar">
