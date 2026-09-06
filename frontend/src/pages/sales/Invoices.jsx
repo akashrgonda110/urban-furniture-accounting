@@ -30,7 +30,7 @@ export default function Invoices() {
     Promise.all([api.getInvoices(), api.getJournals()])
       .then(([inv, j]) => {
         setInvoices(inv);
-        setJournals(j.filter((x) => x.journal_type === "bank" || x.journal_type === "cash"));
+        setJournals(j);  // all journals available for payment
         setLoading(false);
       })
       .catch((e) => { setError(e.message); setLoading(false); });
@@ -262,10 +262,12 @@ export default function Invoices() {
                     <label>Amount (₹) *</label>
                     <input type="number" min="0.01" step="0.01" value={payForm.amount} onChange={(e) => setPayForm((f) => ({ ...f, amount: e.target.value }))} required />
                   </div>
+                  {payForm.payment_method === "bank" && (
                   <div className="form-group">
                     <label>Reference / Cheque No.</label>
-                    <input value={payForm.reference} onChange={(e) => setPayForm((f) => ({ ...f, reference: e.target.value }))} placeholder="Optional reference" />
+                    <input value={payForm.reference} onChange={(e) => setPayForm((f) => ({ ...f, reference: e.target.value }))} placeholder="Enter cheque number" />
                   </div>
+                  )}
                 </div>
               </div>
               <div className="modal-footer">
