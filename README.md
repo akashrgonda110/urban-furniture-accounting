@@ -2,7 +2,7 @@
 
 > **Odoo Hackathon 2026 — Finale Project**
 
-A full-stack web-based accounting application built specifically for an urban furniture business. It covers the complete business flow from master data management through to financial reporting, with double-entry accounting enforced at the database level.
+A full-stack web-based accounting application built for an urban furniture business. It covers the complete business flow from master data management through to financial reporting, with double-entry accounting enforced at the database level.
 
 ---
 
@@ -15,7 +15,7 @@ A full-stack web-based accounting application built specifically for an urban fu
 5. [System Architecture](#5-system-architecture)
 6. [Project Structure](#6-project-structure)
 7. [Database Architecture](#7-database-architecture)
-8. [Authentication](#8-authentication)
+8. [Authentication & Role-Based Access](#8-authentication--role-based-access)
 9. [Business Workflows](#9-business-workflows)
 10. [Double-Entry Accounting](#10-double-entry-accounting)
 11. [Financial Reports](#11-financial-reports)
@@ -23,9 +23,10 @@ A full-stack web-based accounting application built specifically for an urban fu
 13. [Environment Variables](#13-environment-variables)
 14. [Setup & Installation](#14-setup--installation)
 15. [Running the Application](#15-running-the-application)
-16. [Example End-to-End Flow](#16-example-end-to-end-flow)
-17. [Validation & Security](#17-validation--security)
-18. [Out of Scope / Future Work](#18-out-of-scope--future-work)
+16. [Seed / Demo Data](#16-seed--demo-data)
+17. [Example End-to-End Flow](#17-example-end-to-end-flow)
+18. [Validation & Security](#18-validation--security)
+19. [Out of Scope / Future Work](#19-out-of-scope--future-work)
 
 ---
 
@@ -33,18 +34,17 @@ A full-stack web-based accounting application built specifically for an urban fu
 
 The Urban Furniture Accounting System is a purpose-built accounting platform that manages the financial operations of a furniture retail/manufacturing business. It handles contacts, products, sales orders, purchase orders, invoices, vendor bills, payments, journal entries, and financial reporting — all wired to a genuine double-entry accounting engine backed by PostgreSQL.
 
-The application was built as an MVP for the Odoo Hackathon 2026 Finale. Every feature present in the codebase is fully functional with real database reads and writes.
-
 ---
 
 ## 2. Problem Statement
 
-Small and mid-sized furniture businesses typically lack affordable accounting software that integrates both their sales/purchasing workflow and their accounting books. This system addresses that gap by providing:
+Small and mid-sized furniture businesses typically lack affordable accounting software that integrates their sales/purchasing workflow with proper accounting books. This system addresses that by providing:
 
 - A single interface to manage customers, vendors, and products
 - A guided sales and purchase workflow (order → invoice/bill → payment)
-- Automatic double-entry journal entries generated on payment
-- Financial reports (Balance Sheet, Profit & Loss, Budget Report) derived directly from posted journal data
+- Automatic double-entry journal entries on payment
+- Financial reports (Balance Sheet, Profit & Loss, Budget Report) derived from posted journal data
+- Role-based access so different staff see only what they need
 
 ---
 
@@ -52,23 +52,30 @@ Small and mid-sized furniture businesses typically lack affordable accounting so
 
 | Module | What is implemented |
 |--------|-------------------|
-| **Authentication** | JWT login/signup, bcrypt password hashing, role-based user accounts, protected routes |
-| **Contacts** | Full CRUD — customers, vendors, or both; email, mobile, city/state/pincode |
-| **Products** | Full CRUD — goods, service, or combo; sales price, purchase price, category |
-| **Chart of Accounts** | Full CRUD — five account types (asset, liability, income, expense, capital); activate/deactivate |
-| **Journals** | Full CRUD — four journal types (sales, purchase, bank, cash); default account linkage |
-| **Sales Orders** | Create with line items, tax calculation, confirm, cancel, generate invoice |
-| **Invoices** | Auto-generated from sales orders; unpaid → partially paid → paid status tracking |
-| **Purchase Orders** | Create with line items, tax calculation, confirm, cancel, generate bill |
-| **Bills** | Auto-generated from purchase orders; same payment status lifecycle as invoices |
-| **Payments** | Register against invoice or bill; cash or bank method; partial payments supported |
-| **Journal Entries** | Auto-created on payment registration; manual creation with debit=credit enforcement |
-| **Analytic Accounts** | Full CRUD — income or expense type |
-| **Budgets** | Full CRUD — linked to analytic accounts; planned amount, period, responsible person |
-| **Dashboard** | Live summary: customer/vendor/product counts, total sales/purchases, outstanding amounts |
+| **Authentication** | JWT login/signup, bcrypt password hashing, 3 roles, protected routes |
+| **Role-Based Access** | Admin (full), Accountant (master data + transactions + reports), Contact User (own invoices/bills portal) |
+| **User Management** | Admin can link Contact Users to contact records |
+| **Contacts** | Full CRUD — customer/vendor/both; city/state/type filters; file upload for profile image |
+| **Products** | Full CRUD — goods/service/combo; type filter; price validation |
+| **Chart of Accounts** | Full CRUD — 5 types; active/inactive toggle; grouped by type |
+| **Journals** | Full CRUD — 4 types (sales/purchase/bank/cash); 13 pre-seeded journals |
+| **Sales Orders** | Create with line items (auto-fill price), confirm, cancel, quick-create customer (+) |
+| **Invoices** | Auto-generated from sales orders; pay, cancel, **Print PDF** |
+| **Purchase Orders** | Create with line items, confirm, cancel, quick-create vendor (+) |
+| **Bills** | Auto-generated from purchase orders; pay, cancel, **Print PDF** |
+| **Payments** | Register against invoice or bill; cash/bank; cheque no. shown only for bank; all journals in dropdown |
+| **Journal Entries** | Auto-created on payment; manual creation with debit=credit enforcement; date/journal filters |
+| **Analytic Accounts** | Full CRUD — income/expense type; 33 pre-seeded |
+| **Budgets** | Full CRUD — linked to analytic accounts; planned amount; 91 pre-seeded |
+| **My Portal** | Contact Users see their own invoices/bills and can pay directly |
+| **Dashboard** | Live summary stats + large icon Quick Actions grid |
 | **Balance Sheet** | Aggregated from journal items — assets, liabilities, capital |
-| **Profit & Loss** | Income vs expenses from journal items; net profit calculation |
-| **Budget Report** | Planned vs actual (payments in period) with variance and % used |
+| **Profit & Loss** | Income vs expenses from journal items; net profit |
+| **Budget Report** | Planned vs actual (payments in period) with variance % and progress bar |
+| **Filters** | Search + status/type/city/state/date filters on every list page |
+| **Pagination** | 25 records per page on all list pages |
+| **Print PDF** | Invoice and Bill view modals include a Print PDF button (clean A4 layout) |
+| **Success alerts** | Auto-dismiss after 3 seconds on all pages |
 
 ---
 
@@ -85,6 +92,7 @@ Small and mid-sized furniture businesses typically lack affordable accounting so
 | Password hashing | bcryptjs | 3.x |
 | Environment config | dotenv | 17.x |
 | CORS | cors | 2.x |
+| Body limit | express.json `limit: "10mb"` | — |
 | Database | PostgreSQL | 18 |
 
 ---
@@ -97,13 +105,25 @@ Browser (React + Vite)
         │  HTTP/JSON  (http://localhost:5173)
         ▼
 Express REST API  (http://localhost:5000)
+  ├── express.json({ limit: "10mb" })   ← supports base64 image uploads
+  ├── /api/auth        ← JWT signup/login/me
+  ├── /api/contacts    ← CRUD + file upload
+  ├── /api/products    ← CRUD
+  ├── /api/accounts    ← Chart of Accounts CRUD
+  ├── /api/journals    ← Journals CRUD
+  ├── /api/sales       ← Sales Orders + Invoices
+  ├── /api/purchases   ← Purchase Orders + Bills
+  ├── /api/payments    ← Payment registration
+  ├── /api/accounting  ← Manual Journal Entries
+  ├── /api/analytic    ← Analytic Accounts CRUD
+  ├── /api/budgets     ← Budgets CRUD
+  ├── /api/users       ← User Management (admin)
+  └── /api/reports     ← Dashboard + Balance Sheet + P&L + Budget
         │
-        │  pg Pool (parameterized queries)
+        │  pg Pool (parameterized queries, transactions)
         ▼
 PostgreSQL 18  (urban_furniture_accounting)
 ```
-
-The frontend never connects directly to PostgreSQL. All data access goes through the Express API. JWT tokens are stored in `localStorage` on the client and sent as `Authorization: Bearer <token>` on all authenticated requests (the current backend routes do not require auth headers on accounting endpoints — they are openly accessible once the server is running, consistent with the MVP scope).
 
 ---
 
@@ -112,10 +132,11 @@ The frontend never connects directly to PostgreSQL. All data access goes through
 ```
 urban-furniture-accounting/
 ├── backend/
-│   ├── server.js              # Express entry point, route registration
+│   ├── server.js              # Express entry point
 │   ├── db.js                  # PostgreSQL connection pool
 │   ├── .env                   # Environment variables (not committed)
-│   ├── migrate-users.js       # One-time users table migration script
+│   ├── migrate-users.js       # One-time users table migration
+│   ├── seed.js                # Large demo dataset seed script
 │   ├── package.json
 │   └── routes/
 │       ├── auth.js            # Signup, login, /me
@@ -125,43 +146,49 @@ urban-furniture-accounting/
 │       ├── journals.js        # Journal CRUD
 │       ├── sales.js           # Sales orders + invoices
 │       ├── purchases.js       # Purchase orders + bills
-│       ├── payments.js        # Payment registration (invoice + bill)
+│       ├── payments.js        # Payment registration
 │       ├── accounting.js      # Manual journal entries
 │       ├── analytic.js        # Analytic accounts CRUD
 │       ├── budgets.js         # Budget CRUD
+│       ├── users.js           # User management (admin)
 │       └── reports.js         # Dashboard + 3 financial reports
 │
 ├── frontend/
 │   ├── index.html
-│   ├── vite.config.js
 │   ├── package.json
 │   └── src/
-│       ├── main.jsx           # React entry point
+│       ├── main.jsx
 │       ├── App.jsx            # Router, route guards, all routes
 │       ├── index.css          # Global styles
-│       ├── api/
-│       │   └── index.js       # All API call functions (single source)
+│       ├── api/index.js       # All API call functions
 │       ├── context/
-│       │   └── AuthContext.jsx  # JWT auth state, login(), logout()
+│       │   ├── AuthContext.jsx    # JWT auth state
+│       │   └── permissions.js    # RBAC constants & helpers
 │       ├── components/
-│       │   ├── AppLogo.jsx    # Inline SVG brand logo
-│       │   ├── Layout.jsx     # Shell: sidebar + topbar + page area
-│       │   └── Sidebar.jsx    # Navigation + user info + sign out
+│       │   ├── AppLogo.jsx        # Inline SVG brand logo
+│       │   ├── Layout.jsx         # Shell: sidebar + topbar
+│       │   ├── Sidebar.jsx        # Navigation + user info + sign out
+│       │   ├── Pagination.jsx     # Reusable pagination bar
+│       │   └── SuccessAlert.jsx   # Auto-dismiss success alert (3s)
+│       ├── utils/
+│       │   └── printDocument.js   # Invoice/Bill PDF print utility
 │       └── pages/
 │           ├── Login.jsx
-│           ├── Signup.jsx
+│           ├── Signup.jsx         # Public — creates contact_user only
 │           ├── Dashboard.jsx
 │           ├── Contacts.jsx
 │           ├── Products.jsx
 │           ├── Payments.jsx
 │           ├── AnalyticAccounts.jsx
 │           ├── Budgets.jsx
+│           ├── MyPortal.jsx       # Contact User portal
+│           ├── UserManagement.jsx # Admin: link users to contacts
 │           ├── sales/
-│           │   ├── SalesOrders.jsx
-│           │   └── Invoices.jsx
+│           │   ├── SalesOrders.jsx    # Includes quick-create customer
+│           │   └── Invoices.jsx       # Includes Print PDF
 │           ├── purchases/
-│           │   ├── PurchaseOrders.jsx
-│           │   └── Bills.jsx
+│           │   ├── PurchaseOrders.jsx # Includes quick-create vendor
+│           │   └── Bills.jsx          # Includes Print PDF
 │           ├── accounting/
 │           │   ├── ChartOfAccounts.jsx
 │           │   ├── Journals.jsx
@@ -172,7 +199,7 @@ urban-furniture-accounting/
 │               └── BudgetReport.jsx
 │
 └── database/
-    └── schema.sql             # Full PostgreSQL schema (15 + 1 tables)
+    └── schema.sql             # Full PostgreSQL schema (16 tables)
 ```
 
 ---
@@ -183,203 +210,131 @@ urban-furniture-accounting/
 
 | Table | Purpose |
 |-------|---------|
-| `users` | Application user accounts with hashed passwords and roles |
-| `contacts` | Customers, vendors, or contacts serving both roles |
+| `users` | Application accounts — hashed passwords, roles, optional contact link |
+| `contacts` | Customers, vendors, or both — stores base64 profile image |
 | `products` | Product/service catalog with sales and purchase prices |
-| `chart_of_accounts` | General ledger accounts grouped by type |
-| `journals` | Named journals (Sales, Purchase, Bank, Cash) linked to a default account |
+| `chart_of_accounts` | General ledger accounts — 5 types, activate/deactivate |
+| `journals` | Named journals (Sales/Purchase/Bank/Cash) — 13 in DB |
 | `sales_orders` | Customer orders with status lifecycle |
-| `sales_order_items` | Line items for each sales order with per-line tax |
-| `invoices` | Customer invoices derived from sales orders; one invoice per order |
+| `sales_order_items` | Line items with per-line tax calculation |
+| `invoices` | Customer invoices — one per sales order |
 | `purchase_orders` | Vendor orders with status lifecycle |
-| `purchase_order_items` | Line items for each purchase order with per-line tax |
-| `bills` | Vendor bills derived from purchase orders; one bill per order |
-| `payments` | Payment records linked to either an invoice or a bill (never both) |
+| `purchase_order_items` | Line items with per-line tax calculation |
+| `bills` | Vendor bills — one per purchase order |
+| `payments` | Payments linked to invoice OR bill (never both) |
 | `journal_entries` | Header record for each accounting entry |
-| `journal_items` | Individual debit/credit lines; each line carries only debit OR credit |
-| `analytic_accounts` | Cost/profit centres of type income or expense |
-| `budgets` | Budget plans linked to an analytic account with a date range and planned amount |
+| `journal_items` | Debit/credit lines — each line carries only debit OR credit |
+| `analytic_accounts` | Cost/profit centres — income or expense type |
+| `budgets` | Budget plans linked to analytic accounts |
 
-### Key Relationships
+### Key Constraints
 
-```
-contacts ──────────────┬──► sales_orders ──► sales_order_items
-                       │         │                  │ (product_id)
-                       │         └──► invoices ──► payments
-                       │
-                       ├──► purchase_orders ──► purchase_order_items
-                       │         │                    │ (product_id)
-                       │         └──► bills ──────► payments
-                       │
-products ──────────────┘
+- `journal_items`: `(debit > 0 AND credit = 0) OR (credit > 0 AND debit = 0)` — enforced by DB
+- `payments`: exactly one of `invoice_id` or `bill_id` per row — enforced by DB CHECK
+- `invoices`: UNIQUE on `sales_order_id` — one invoice per order
+- `bills`: UNIQUE on `purchase_order_id` — one bill per order
+- `budgets`: `end_date >= start_date`
+- All monetary fields: `NUMERIC(12,2)` with `>= 0` guards
 
-payments ──────────────────► journal_entries ──► journal_items
-                                    │
-journals ──────────────────────────┘
-journal_items ─────────────────────────────────► chart_of_accounts
+### Account Types
 
-analytic_accounts ─────────────────────────────► budgets
-```
-
-### Account Types and Normal Balances
-
-| Type | Normal Balance | Used in |
-|------|---------------|---------|
+| Type | Normal Balance | Report |
+|------|---------------|--------|
 | `asset` | Debit | Balance Sheet |
 | `liability` | Credit | Balance Sheet |
 | `capital` | Credit | Balance Sheet |
 | `income` | Credit | Profit & Loss |
 | `expense` | Debit | Profit & Loss |
 
-### Important Constraints (enforced by database)
-
-- `journal_items`: each line must have `(debit > 0 AND credit = 0)` OR `(credit > 0 AND debit = 0)` — a line cannot carry both
-- `payments`: exactly one of `invoice_id` or `bill_id` must be non-null per row
-- `invoices`: unique per `sales_order_id` — one invoice per sales order
-- `bills`: unique per `purchase_order_id` — one bill per purchase order
-- `budgets`: `end_date >= start_date`
-- All monetary fields use `NUMERIC(12,2)`
-- Prices and quantities have `CHECK (value >= 0)` or `CHECK (value > 0)` guards
-
 ---
 
-## 8. Authentication
-
-### Approach
-
-JWT (JSON Web Token) authentication with bcryptjs password hashing.
-
-### Users Table
-
-```sql
-users (
-  id            BIGSERIAL PRIMARY KEY,
-  full_name     VARCHAR(150) NOT NULL,
-  email         VARCHAR(150) NOT NULL UNIQUE,
-  password_hash TEXT NOT NULL,           -- bcrypt, cost factor 10
-  role          VARCHAR(50) NOT NULL     -- 'admin' | 'accountant' | 'contact_user'
-                  DEFAULT 'accountant',
-  contact_id    BIGINT REFERENCES contacts(id),  -- nullable
-  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
-```
+## 8. Authentication & Role-Based Access
 
 ### Auth Flow
 
 ```
-POST /api/auth/signup
-  → validate fields (name, email format, password ≥6 chars, passwords match)
-  → check email uniqueness
-  → bcrypt.hash(password, 10)
-  → INSERT user
-  → return 201 + safe user object (no password_hash)
-
-POST /api/auth/login
-  → find user by email (case-insensitive)
-  → bcrypt.compare(supplied, stored hash)
-  → sign JWT { id, email, role, full_name }, expires in 7d
-  → return token + safe user object
-
-GET /api/auth/me
-  → verify Bearer token
-  → fetch fresh user from DB
-  → return safe user object
+POST /api/auth/signup  → always creates contact_user role (no role choice on public signup)
+POST /api/auth/login   → returns JWT token (7-day expiry)
+GET  /api/auth/me      → validates token, returns current user
 ```
-
-### Frontend Session
-
-- Token and user object stored in `localStorage` under keys `uf_token` / `uf_user`
-- `AuthContext` restores session on page load
-- `PrivateRoute` redirects unauthenticated users to `/login`
-- `PublicRoute` redirects already-logged-in users away from `/login` and `/signup`
-- `logout()` clears both localStorage keys and redirects to `/login`
 
 ### Roles
 
-| Role | Internal value | Description |
-|------|---------------|-------------|
-| Admin / Business Owner | `admin` | Full access |
-| Accountant | `accountant` | Default role |
-| Contact User | `contact_user` | Limited user |
+| Role | Internal value | Access |
+|------|---------------|--------|
+| Admin / Business Owner | `admin` | Full access to all modules |
+| Accountant | `accountant` | Dashboard, contacts, products, sales, purchases, invoices, bills, payments, accounting, analytics, budgets, reports |
+| Contact User | `contact_user` | My Portal only — sees own invoices/bills and can pay them |
 
-Role is stored and displayed but route-level permission enforcement is not yet implemented (all authenticated users can access all modules in this MVP).
+### Security
+
+- Passwords hashed with bcrypt (cost factor 10)
+- `password_hash` never returned in any API response
+- Public signup **hardcodes** `contact_user` role — even direct API calls cannot create admin/accountant
+- Admin and Accountant accounts are created via User Management by an existing Admin
+- JWT stored in `localStorage` (adequate for MVP scope)
+- All route guards implemented in `App.jsx` via `PrivateRoute`, `PublicRoute`, and `RoleRoute`
+
+### User Management (Admin only)
+
+Admin navigates to **Admin → User Management** to:
+- View all users with their linked contact
+- Link a Contact User to a contact record (so their portal shows the correct invoices/bills)
 
 ---
 
 ## 9. Business Workflows
 
-### Sales Workflow
+### Sales Cycle
 
 ```
-1. Create Sales Order
-   - Select customer (type: customer or both)
-   - Add line items: product, quantity, unit price, tax rate (%)
-   - System calculates: subtotal = qty × price
-                        tax = subtotal × tax_rate / 100
-                        total = subtotal + tax
-   - Status: draft
-
-2. Confirm Sales Order
-   - Status: draft → confirmed
-
-3. Create Invoice
-   - Triggered from a confirmed sales order
-   - Copies amounts from the sales order
-   - Sales order status: confirmed → invoiced
-   - Invoice status: unpaid
-   - One invoice per sales order (enforced by UNIQUE constraint)
-
-4. Register Payment (against invoice)
-   - See Payment Workflow below
-
-5. Cancel
-   - Sales order: cancellable from draft or confirmed
-   - Invoice: cancellable only when unpaid
+Create Sales Order (draft)
+        ↓
+   Confirm Order (confirmed)
+        ↓
+   Create Invoice (invoiced → unpaid)
+        ↓
+   Register Payment
+        ↓
+   Invoice status: partially_paid → paid
+        ↓
+   Auto journal entry created (Debit Cash, Credit Receivable)
 ```
 
-### Purchase Workflow
+### Purchase Cycle
 
 ```
-1. Create Purchase Order
-   - Select vendor (type: vendor or both)
-   - Add line items with the same tax calculation as sales
-
-2. Confirm Purchase Order
-   - Status: draft → confirmed
-
-3. Create Bill
-   - Triggered from a confirmed purchase order
-   - Purchase order status: confirmed → billed
-   - Bill status: unpaid
-
-4. Register Payment (against bill)
-   - See Payment Workflow below
-
-5. Cancel
-   - Purchase order: cancellable from draft or confirmed
-   - Bill: cancellable only when unpaid
+Create Purchase Order (draft)
+        ↓
+   Confirm Order (confirmed)
+        ↓
+   Create Bill (billed → unpaid)
+        ↓
+   Register Payment
+        ↓
+   Bill status: partially_paid → paid
+        ↓
+   Auto journal entry created (Debit Payable, Credit Cash)
 ```
 
-### Payment Workflow
+### Tax Calculation (per line item)
 
 ```
-Register Payment for Invoice or Bill:
-  - Select journal (bank or cash)
-  - Select payment method (cash / bank)
-  - Enter amount (can be less than total for partial payment)
-  - Enter payment date and optional reference
-
-System actions (in a single database transaction):
-  1. Insert payment record
-  2. Sum all payments so far for that invoice/bill
-  3. Update invoice/bill status:
-       total_paid < total_amount  → partially_paid
-       total_paid >= total_amount → paid
-  4. Auto-create journal entry (if journal has a default account):
-       Invoice payment:  Debit Cash/Bank  |  Credit Accounts Receivable
-       Bill payment:     Debit Accounts Payable  |  Credit Cash/Bank
+subtotal   = quantity × unit_price
+tax_amount = subtotal × tax_rate / 100
+total      = subtotal + tax_amount
 ```
+
+### Payment Modal Behaviour
+
+- All journals shown (not limited to cash/bank type)
+- **Reference / Cheque No.** field is hidden when payment method = `cash`, visible when = `bank`
+- Partial payments supported — invoice/bill status becomes `partially_paid` until fully settled
+
+### Quick-Create Shortcuts
+
+- **Sales Orders** — `+` button next to Customer dropdown creates a new customer instantly
+- **Purchase Orders** — `+` button next to Vendor dropdown creates a new vendor instantly
 
 ---
 
@@ -389,198 +344,133 @@ System actions (in a single database transaction):
 
 Every journal entry must satisfy: **Total Debit = Total Credit**
 
-This is enforced in two places:
+Enforced at two levels:
 
-1. **API level** (`routes/accounting.js`) — the POST /api/accounting/entries endpoint calculates total debit and credit before insert, and returns HTTP 400 if `|debit - credit| > 0.01`. Each journal item line is also validated to carry only debit OR credit, never both.
-
-2. **Database level** (`journal_items` table) — the CHECK constraint `(debit > 0 AND credit = 0) OR (credit > 0 AND debit = 0)` is enforced by PostgreSQL itself.
+1. **API** (`routes/accounting.js`) — rejects unbalanced entries with HTTP 400
+2. **Database** — CHECK constraint on `journal_items`
 
 ### Auto-Generated Entries on Payment
-
-When a payment is registered and the selected journal has a `default_account_id`, the system automatically creates a balanced journal entry:
 
 | Transaction | Debit | Credit |
 |-------------|-------|--------|
 | Customer payment received | Cash/Bank (asset) | Accounts Receivable (asset) |
 | Vendor payment made | Accounts Payable (liability) | Cash/Bank (asset) |
 
-Auto-generation requires an account named with "receivable" (for invoices) or "payable" (for bills) to exist in the Chart of Accounts.
+Auto-generation requires accounts named with "receivable" / "payable" in the Chart of Accounts.
 
 ### Manual Journal Entries
 
-Users can also create manual journal entries from the Journal Entries screen. The UI shows a real-time balance indicator and disables the submit button until `total debit = total credit`.
+Created from the Journal Entries screen. The UI shows a real-time debit=credit balance indicator and blocks submission if unbalanced.
 
 ---
 
 ## 11. Financial Reports
 
-All three reports are computed live from the `journal_items` and related tables — no pre-aggregated report tables exist.
+All three reports computed live from journal items — no pre-aggregated report tables.
 
 ### Balance Sheet
-
-Aggregates journal items by account type:
-
-- **Assets** — debit balance accounts (`total_debit - total_credit`)
-- **Liabilities** — credit balance accounts (shown as absolute values)
-- **Capital** — credit balance accounts (shown as absolute values)
+Assets (debit balance) vs Liabilities + Capital (credit balance).
+Shows accounting equation check: Assets = Liabilities + Capital.
 
 ### Profit & Loss
-
-Aggregates income and expense accounts:
-
-- **Income** — `total_credit - total_debit` per account
-- **Expenses** — `total_debit - total_credit` per account
-- **Net Profit** = Total Income − Total Expenses
+Income (credit balance accounts) minus Expenses (debit balance accounts) = Net Profit/Loss.
 
 ### Budget Report
-
-For each budget:
-- **Planned Amount** — from the `budgets` table
-- **Actual Amount** — sum of payments in the budget's date range:
-  - Income budget → sum of invoice payments in the period
-  - Expense budget → sum of bill payments in the period
-- **Variance** = Planned − Actual
-- **% Used** = (Actual / Planned) × 100
-
-### Dashboard
-
-Live counts and sums pulled in parallel:
-- Total customers, total vendors, total products
-- Total sales (non-cancelled orders)
-- Total purchases (non-cancelled orders)
-- Outstanding invoice amount (unpaid + partially_paid)
-- Outstanding bill amount (unpaid + partially_paid)
+Planned amount vs Actual (payments made/received within the budget period).
+Shows variance, % used with colour-coded progress bar.
 
 ---
 
 ## 12. API Reference
 
 ### Authentication
-
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/auth/signup` | Create account |
+| POST | `/api/auth/signup` | Create contact_user account |
 | POST | `/api/auth/login` | Login, receive JWT |
-| GET | `/api/auth/me` | Get current user (requires Bearer token) |
+| GET | `/api/auth/me` | Get current user (Bearer token required) |
 
 ### Contacts
-
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/contacts` | List all contacts |
-| GET | `/api/contacts/:id` | Get single contact |
-| POST | `/api/contacts` | Create contact |
-| PUT | `/api/contacts/:id` | Update contact |
-| DELETE | `/api/contacts/:id` | Delete contact |
+| GET | `/api/contacts` | List all |
+| GET | `/api/contacts/:id` | Get one |
+| POST | `/api/contacts` | Create (supports base64 profile_image up to 10MB) |
+| PUT | `/api/contacts/:id` | Update |
+| DELETE | `/api/contacts/:id` | Delete |
 
 ### Products
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/products` | List all products |
-| GET | `/api/products/:id` | Get single product |
-| POST | `/api/products` | Create product |
-| PUT | `/api/products/:id` | Update product |
-| DELETE | `/api/products/:id` | Delete product |
+| GET/POST/PUT/DELETE | `/api/products[/:id]` | Full CRUD |
 
 ### Chart of Accounts
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/accounts` | List all accounts |
-| GET | `/api/accounts/:id` | Get single account |
-| POST | `/api/accounts` | Create account |
-| PUT | `/api/accounts/:id` | Update account |
+| GET/POST/PUT | `/api/accounts[/:id]` | CRUD |
 | PATCH | `/api/accounts/:id/toggle` | Toggle active/inactive |
 
 ### Journals
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/journals` | List all journals |
-| GET | `/api/journals/:id` | Get single journal |
-| POST | `/api/journals` | Create journal |
-| PUT | `/api/journals/:id` | Update journal |
+| GET/POST/PUT | `/api/journals[/:id]` | CRUD |
 
 ### Sales
-
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/sales/orders` | List sales orders |
-| GET | `/api/sales/orders/:id` | Get order with line items |
-| POST | `/api/sales/orders` | Create sales order |
-| PATCH | `/api/sales/orders/:id/confirm` | Confirm order |
-| PATCH | `/api/sales/orders/:id/cancel` | Cancel order |
-| GET | `/api/sales/invoices` | List invoices |
-| GET | `/api/sales/invoices/:id` | Get invoice with items |
-| POST | `/api/sales/invoices` | Create invoice from sales order |
-| PATCH | `/api/sales/invoices/:id/cancel` | Cancel invoice |
+| GET/POST | `/api/sales/orders` | List / Create |
+| GET | `/api/sales/orders/:id` | Get with line items |
+| PATCH | `/api/sales/orders/:id/confirm` | Confirm |
+| PATCH | `/api/sales/orders/:id/cancel` | Cancel |
+| GET/POST | `/api/sales/invoices` | List / Create from order |
+| GET | `/api/sales/invoices/:id` | Get with line items |
+| PATCH | `/api/sales/invoices/:id/cancel` | Cancel |
 
 ### Purchases
-
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/purchases/orders` | List purchase orders |
-| GET | `/api/purchases/orders/:id` | Get order with line items |
-| POST | `/api/purchases/orders` | Create purchase order |
-| PATCH | `/api/purchases/orders/:id/confirm` | Confirm order |
-| PATCH | `/api/purchases/orders/:id/cancel` | Cancel order |
-| GET | `/api/purchases/bills` | List bills |
-| GET | `/api/purchases/bills/:id` | Get bill with items |
-| POST | `/api/purchases/bills` | Create bill from purchase order |
-| PATCH | `/api/purchases/bills/:id/cancel` | Cancel bill |
+| GET/POST | `/api/purchases/orders` | List / Create |
+| GET | `/api/purchases/orders/:id` | Get with line items |
+| PATCH | `/api/purchases/orders/:id/confirm` | Confirm |
+| PATCH | `/api/purchases/orders/:id/cancel` | Cancel |
+| GET/POST | `/api/purchases/bills` | List / Create from order |
+| GET | `/api/purchases/bills/:id` | Get with line items |
+| PATCH | `/api/purchases/bills/:id/cancel` | Cancel |
 
 ### Payments
-
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/payments` | List all payments |
-| GET | `/api/payments/:id` | Get single payment |
-| POST | `/api/payments/invoice/:invoiceId` | Register payment for invoice |
-| POST | `/api/payments/bill/:billId` | Register payment for bill |
+| GET | `/api/payments` | List all |
+| GET | `/api/payments/:id` | Get one |
+| POST | `/api/payments/invoice/:invoiceId` | Register invoice payment |
+| POST | `/api/payments/bill/:billId` | Register bill payment |
 
-### Accounting (Journal Entries)
-
+### Accounting
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/accounting/entries` | List all journal entries with totals |
-| GET | `/api/accounting/entries/:id` | Get entry with debit/credit lines |
-| POST | `/api/accounting/entries` | Create manual journal entry |
+| GET | `/api/accounting/entries` | List with debit/credit totals |
+| GET | `/api/accounting/entries/:id` | Get with line items |
+| POST | `/api/accounting/entries` | Create manual entry (validates balance) |
 
 ### Analytic Accounts
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/analytic` | List all analytic accounts |
-| GET | `/api/analytic/:id` | Get single account |
-| POST | `/api/analytic` | Create analytic account |
-| PUT | `/api/analytic/:id` | Update analytic account |
-| DELETE | `/api/analytic/:id` | Delete analytic account |
+| GET/POST/PUT/DELETE | `/api/analytic[/:id]` | Full CRUD |
 
 ### Budgets
+| GET/POST/PUT/DELETE | `/api/budgets[/:id]` | Full CRUD |
 
+### User Management
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/budgets` | List all budgets |
-| GET | `/api/budgets/:id` | Get single budget |
-| POST | `/api/budgets` | Create budget |
-| PUT | `/api/budgets/:id` | Update budget |
-| DELETE | `/api/budgets/:id` | Delete budget |
+| GET | `/api/users` | List all users (admin) |
+| PATCH | `/api/users/:id/link-contact` | Link/unlink contact |
 
 ### Reports
-
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/reports/dashboard` | Dashboard summary metrics |
-| GET | `/api/reports/balance-sheet` | Balance sheet by account |
+| GET | `/api/reports/dashboard` | 7 summary metrics |
+| GET | `/api/reports/balance-sheet` | Assets, liabilities, capital |
 | GET | `/api/reports/profit-loss` | Income, expenses, net profit |
-| GET | `/api/reports/budget` | Budget vs actual by period |
+| GET | `/api/reports/budget` | Planned vs actual per budget |
 
 ---
 
 ## 13. Environment Variables
 
-Create `backend/.env` with the following values:
+Create `backend/.env`:
 
 ```env
 # PostgreSQL connection
@@ -595,7 +485,7 @@ JWT_SECRET=your_jwt_secret_here
 JWT_EXPIRES_IN=7d
 ```
 
-> `.env` is listed in `.gitignore` and must never be committed to version control.
+> `.env` is in `.gitignore` and must never be committed.
 
 ---
 
@@ -604,39 +494,35 @@ JWT_EXPIRES_IN=7d
 ### Prerequisites
 
 - Node.js 18+
-- PostgreSQL 18 (server running locally)
+- PostgreSQL 18
 - npm
 
-### PostgreSQL Database Setup
+### Database Setup
 
 ```sql
--- Run in psql as superuser
+-- In psql as superuser
 CREATE DATABASE urban_furniture_accounting;
 ```
 
-Then apply the schema:
-
+Apply the schema:
 ```bash
 psql -U postgres -d urban_furniture_accounting -f database/schema.sql
 ```
 
-Then create the users table:
-
+Create the users table:
 ```bash
 cd backend
 node migrate-users.js
 ```
 
-Expected output: `users table created successfully.`
-
-### Backend Setup
+### Backend
 
 ```bash
 cd backend
 npm install
 ```
 
-### Frontend Setup
+### Frontend
 
 ```bash
 cd frontend
@@ -647,132 +533,135 @@ npm install
 
 ## 15. Running the Application
 
-### Start the backend
-
+### Backend
 ```bash
 cd backend
 node server.js
+# Server starts at http://localhost:5000
 ```
 
-Server starts at **http://localhost:5000**
+Verify: `GET http://localhost:5000/api/db-test` → `{ "message": "Database connected successfully!" }`
 
-Verify: `GET http://localhost:5000/api/db-test` should return `{ "message": "Database connected successfully!" }`
-
-### Start the frontend
-
+### Frontend
 ```bash
 cd frontend
 npm run dev
+# Frontend starts at http://localhost:5173
 ```
 
-Frontend starts at **http://localhost:5173**
-
-Open **http://localhost:5173** in a browser. Unauthenticated users are redirected to `/login`.
+Open **http://localhost:5173** — unauthenticated users are redirected to `/login`.
 
 ---
 
-## 16. Example End-to-End Flow
+## 16. Seed / Demo Data
 
-This walkthrough demonstrates the core business cycle.
+Run after setup to populate a realistic demo dataset:
 
-**Step 1 — Setup master data**
-1. Sign up for an account at `/signup`, then log in
-2. Add a Contact: type = Customer (e.g. "Sharma Interiors")
-3. Add a Contact: type = Vendor (e.g. "Teak Wood Suppliers")
-4. Add a Product: "Teak Dining Table", sales price ₹25,000, purchase price ₹15,000, type = Goods
+```bash
+cd backend
+node seed.js
+```
 
-**Step 2 — Setup accounting**
-5. Add accounts in Chart of Accounts:
-   - "Cash in Hand" (asset)
-   - "Accounts Receivable" (asset)
-   - "Accounts Payable" (liability)
-   - "Sales Income" (income)
-   - "Purchase Expense" (expense)
-6. Add a Journal: "Cash Journal", type = Cash, default account = Cash in Hand
+This creates:
+
+| Table | Seeded count |
+|-------|-------------|
+| contacts | 90 (30 customer + 30 vendor + 30 both) |
+| products | 40 (15 goods + 15 service + 10 combo) |
+| sales_orders | 400 (draft/confirmed/invoiced/cancelled mix) |
+| invoices | ~180 |
+| purchase_orders | 400 |
+| bills | ~180 |
+| payments | ~285 |
+
+Additional seed scripts (run individually if needed):
+
+```bash
+node migrate-users.js          # creates users table
+```
+
+Journals (12 covering all types), analytic accounts (30), and budgets (90) are seeded via the main seed or individually.
+
+### Default accounts created by seed
+
+You can log in after seeding via the Signup page (creates contact_user), or create admin/accountant accounts directly in PostgreSQL or via `migrate-users.js`.
+
+---
+
+## 17. Example End-to-End Flow
+
+**Step 1 — Master data**
+1. Log in as Admin
+2. Add Contact: Sharma Interiors (Customer)
+3. Add Contact: Teak Wood Suppliers (Vendor)
+4. Add Product: Teak Dining Table — Sales ₹25,000 / Purchase ₹15,000
+
+**Step 2 — Accounting setup**
+5. Chart of Accounts → add: Cash in Hand (asset), Accounts Receivable (asset), Accounts Payable (liability), Sales Income (income), Purchase Expense (expense)
+6. Journals → add: Cash Journal (cash, default: Cash in Hand)
 
 **Step 3 — Sales cycle**
-7. Create a Sales Order for Sharma Interiors — 2 × Teak Dining Table @ ₹25,000, 18% tax
-   - Subtotal: ₹50,000 | Tax: ₹9,000 | Total: ₹59,000
-8. Confirm the Sales Order
-9. Create Invoice from the confirmed order
-10. Register Payment of ₹59,000 against the invoice using Cash Journal
-    - Invoice status becomes: **paid**
-    - Journal entry auto-created: Debit Cash ₹59,000 / Credit Accounts Receivable ₹59,000
+7. Sales Orders → New → select Sharma Interiors → add 2× Teak Dining Table @ 18% tax → Create → Confirm → Create Invoice
+8. Invoices → Pay → select Cash Journal → ₹59,000 → Register Payment
+9. Invoice status → **paid** · Auto journal entry → Debit Cash / Credit Receivable
 
 **Step 4 — Purchase cycle**
-11. Create a Purchase Order for Teak Wood Suppliers — 5 × Teak Dining Table @ ₹15,000, 12% tax
-    - Total: ₹84,000
-12. Confirm → Create Bill
-13. Register partial payment of ₹40,000
-    - Bill status: **partially_paid**
-14. Register remaining ₹44,000
-    - Bill status: **paid**
+10. Purchase Orders → New → select Teak Wood Suppliers → add 5× Teak Dining Table @ 12% → Create → Confirm → Create Bill
+11. Bills → Pay → ₹84,000 → Register Payment → Bill status → **paid**
 
-**Step 5 — Manual journal entry for sales income**
-15. In Journal Entries, create:
-    - Debit: Accounts Receivable ₹59,000
-    - Credit: Sales Income ₹59,000
-
-**Step 6 — View reports**
-16. Balance Sheet — shows Cash and Accounts Receivable balances
-17. Profit & Loss — shows Sales Income ₹59,000 as income
-18. Budget Report — shows actuals vs planned for any budgets configured
+**Step 5 — Reports**
+12. Balance Sheet — shows cash/receivable balances
+13. Profit & Loss — shows income after posting a manual sales entry
+14. Budget Report — shows variance against configured budgets
 
 ---
 
-## 17. Validation & Security
+## 18. Validation & Security
 
-### Backend validation
-- All required fields validated before database operations
-- Email format validated with regex on signup
-- Password minimum length: 6 characters
-- Passwords compared before hashing (confirm_password check)
-- All SQL queries use parameterized placeholders (`$1, $2, ...`) — no string concatenation
-- `password_hash` is never included in any API response (`safeUser()` helper strips it)
-- Duplicate email returns 400 (unique constraint + pre-check)
-- Invalid credentials return 401 with identical message for both "user not found" and "wrong password" cases (no user enumeration)
+### Frontend validation
+- Name fields: letters/spaces/punctuation only
+- Email: regex format check
+- Mobile: 7–15 digits, optional `+` prefix
+- City/State: letters only
+- Pincode: 4–10 digits
+- Profile image: JPG/PNG/PDF, max 2MB (converted to base64)
+- Product name: must contain at least one letter
+- Prices: ≥ 0 numeric
+- Password (signup): min 8 chars, must include uppercase, lowercase, special character
+- Order items: product required, qty > 0, price ≥ 0, tax 0–100
+- Payment amount: > 0, cannot exceed invoice/bill total
+- Journal entries: debit = credit enforced before submit
 
-### Database-level constraints
-- `journal_items`: each line is either debit-only or credit-only (CHECK constraint)
-- `payments`: exactly one of invoice_id or bill_id per row (CHECK constraint)
-- `invoices`: one per sales_order_id (UNIQUE constraint)
-- `bills`: one per purchase_order_id (UNIQUE constraint)
-- Monetary amounts: `CHECK (amount >= 0)` or `CHECK (amount > 0)` as appropriate
+### Backend security
+- Parameterized SQL everywhere — no string concatenation
+- `password_hash` never in API responses
+- Public signup hardcodes `contact_user` role — cannot escalate via API
+- Body limit: `10mb` for base64 image uploads
+- No user enumeration — both "user not found" and "wrong password" return the same 401 message
+- Multi-step operations wrapped in database transactions
 
-### Transactions
-Multi-step operations use explicit `BEGIN / COMMIT / ROLLBACK`:
-- Creating a sales order with line items
-- Creating a purchase order with line items
-- Creating an invoice and updating the sales order status
-- Creating a bill and updating the purchase order status
-- Registering a payment, updating invoice/bill status, and auto-creating a journal entry
-
-### Frontend
-- `PrivateRoute` guards all accounting pages — unauthenticated access redirects to `/login`
-- `PublicRoute` prevents already-logged-in users from accessing `/login` and `/signup`
-- JWT token stored in `localStorage` (adequate for this MVP scope)
+### Database constraints
+- `journal_items` debit XOR credit per line (CHECK)
+- `payments` exactly one of invoice_id/bill_id (CHECK)
+- `invoices` unique per sales_order (UNIQUE)
+- `bills` unique per purchase_order (UNIQUE)
 
 ---
 
-## 18. Out of Scope / Future Work
+## 19. Out of Scope / Future Work
 
-The following features were deliberately not implemented in this MVP:
-
-| Feature | Reason |
+| Feature | Status |
 |---------|--------|
-| Role-based permissions | All authenticated users have full access; role stored for future use |
-| Password reset / forgot password | No email service configured |
-| Email verification on signup | No email service configured |
-| OAuth / social login | Out of scope for MVP |
-| Multi-currency support | Single currency (INR) assumed |
-| Tax configuration module | Tax rate entered per order line |
-| Inventory / stock management | Quantities not tracked beyond order lines |
-| Product images | Not implemented |
-| PDF invoice / bill generation | Not implemented |
+| Role-based API middleware | Frontend guards only; backend routes are open to authenticated sessions |
+| Password reset / forgot password | Shows informational alert; no email service |
+| Email verification | Not implemented |
+| Multi-currency | Single currency (INR) |
+| Inventory / stock tracking | Quantities in orders only |
+| PDF generation library | Uses browser `window.print()` — no server-side PDF |
+| Analytic account linkage on journal items | Budget actuals use payment dates as proxy |
+| Admin UI to create Accountant/Admin users | Done via DB or direct API call |
 | Audit log | Not implemented |
 | Multi-company / multi-branch | Not implemented |
-| Analytic account linkage on journal items | Schema does not include analytic_account_id on journal_items; budget actuals use payment dates as proxy |
-| API authentication middleware | Backend routes are accessible without a token (JWT only gates the frontend UI in this MVP) |
 
 ---
 
