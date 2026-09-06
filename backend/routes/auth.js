@@ -40,8 +40,8 @@ router.post("/signup", async (req, res) => {
   if (password !== confirm_password)
     return res.status(400).json({ error: "Passwords do not match" });
 
-  const allowedRoles = ["admin", "accountant", "contact_user"];
-  const userRole = role && allowedRoles.includes(role) ? role : "accountant";
+  // Public signup ALWAYS creates contact_user — admin/accountant are created by admin via User Management
+  const userRole = "contact_user";
 
   try {
     // Check email uniqueness

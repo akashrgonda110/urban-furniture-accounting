@@ -3,7 +3,6 @@ import { useNavigate, Link } from "react-router-dom";
 import AppLogo from "../components/AppLogo";
 
 const API = "http://localhost:5000/api";
-const ROLE_MAP = { user: "contact_user", accountant: "accountant", admin: "admin" };
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -12,7 +11,6 @@ export default function Signup() {
     email: "",
     password: "",
     confirm_password: "",
-    uiRole: "accountant",
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -25,7 +23,10 @@ export default function Signup() {
     if (!form.email.trim()) return "Email is required.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return "Invalid email address.";
     if (!form.password) return "Password is required.";
-    if (form.password.length < 6) return "Password must be at least 6 characters.";
+    if (form.password.length < 8) return "Password must be at least 8 characters.";
+    if (!/[a-z]/.test(form.password)) return "Password must contain at least one lowercase letter.";
+    if (!/[A-Z]/.test(form.password)) return "Password must contain at least one uppercase letter.";
+    if (!/[^a-zA-Z0-9]/.test(form.password)) return "Password must contain at least one special character.";
     if (form.password !== form.confirm_password) return "Passwords do not match.";
     return null;
   };
@@ -35,12 +36,13 @@ export default function Signup() {
     const err = validate();
     if (err) { setError(err); return; }
     setLoading(true); setError(""); setSuccess("");
+    // Always sign up as contact_user — role cannot be chosen on public signup
     const payload = {
       full_name: form.full_name.trim(),
       email: form.email.trim(),
       password: form.password,
       confirm_password: form.confirm_password,
-      role: ROLE_MAP[form.uiRole] || "accountant",
+      role: "contact_user",
     };
     try {
       const res = await fetch(`${API}/auth/signup`, {
@@ -79,26 +81,11 @@ export default function Signup() {
           </div>
 
           <div style={S.fieldRow}>
-            <label style={S.label}>Role</label>
-            <div style={S.radioGroup}>
-              <label style={S.radioLabel}>
-                <input type="radio" name="uiRole" value="user" checked={form.uiRole === "user"} onChange={handleChange} style={{ marginRight:6 }} />
-                User
-              </label>
-              <label style={{ ...S.radioLabel, marginLeft:20 }}>
-                <input type="radio" name="uiRole" value="accountant" checked={form.uiRole === "accountant"} onChange={handleChange} style={{ marginRight:6 }} />
-                Accountant
-              </label>
-              <label style={{ ...S.radioLabel, marginLeft:20 }}>
-                <input type="radio" name="uiRole" value="admin" checked={form.uiRole === "admin"} onChange={handleChange} style={{ marginRight:6 }} />
-                Admin
-              </label>
-            </div>
-          </div>
-
-          <div style={S.fieldRow}>
             <label style={S.label}>Password</label>
-            <input name="password" type="password" value={form.password} onChange={handleChange} placeholder="Min 6 characters" required style={S.input} />
+            <input name="password" type="password" value={form.password} onChange={handleChange} placeholder="Min 8 chars, upper, lower & special" required style={S.input} />
+            <span style={{ fontSize:11, color:"#888", marginTop:3 }}>
+              Must be 8+ characters with uppercase, lowercase and a special character (e.g. @, #, !)
+            </span>
           </div>
 
           <div style={S.fieldRow}>
@@ -130,8 +117,6 @@ const S = {
   fieldRow: { display:"flex", flexDirection:"column", marginBottom:13 },
   label: { fontSize:13, fontWeight:600, color:"#333", marginBottom:4 },
   input: { border:"1.5px solid #888", borderRadius:6, padding:"8px 11px", fontSize:13, color:"#222", background:"#fff", outline:"none", width:"100%", boxSizing:"border-box" },
-  radioGroup: { display:"flex", alignItems:"center", paddingTop:4, flexWrap:"wrap", gap:4 },
-  radioLabel: { fontSize:13, color:"#333", display:"flex", alignItems:"center", cursor:"pointer", fontWeight:500 },
   btnRow: { display:"flex", justifyContent:"center", gap:14, marginTop:10, marginBottom:4 },
   createBtn: { background:"#fff", border:"2px solid #555", borderRadius:8, padding:"9px 36px", fontSize:13, fontWeight:700, color:"#222", cursor:"pointer", letterSpacing:"1px" },
   cancelBtn: { background:"#fff", border:"2px solid #aaa", borderRadius:8, padding:"9px 24px", fontSize:13, fontWeight:500, color:"#555", cursor:"pointer" },
