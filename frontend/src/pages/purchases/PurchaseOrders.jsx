@@ -24,6 +24,14 @@ export default function PurchaseOrders() {
   const PAGE_SIZE = 25;
   const [page, setPage] = useState(1);
 
+  // Quick-create vendor state
+  const [showQuickVendor, setShowQuickVendor] = useState(false);
+  const [quickName, setQuickName] = useState("");
+  const [quickEmail, setQuickEmail] = useState("");
+  const [quickMobile, setQuickMobile] = useState("");
+  const [quickSaving, setQuickSaving] = useState(false);
+  const [quickError, setQuickError] = useState("");
+
   const [form, setForm] = useState({ vendor_id: "", order_date: today() });
   const [items, setItems] = useState([{ ...EMPTY_ITEM }]);
 
@@ -142,6 +150,29 @@ export default function PurchaseOrders() {
     } catch (err) { setError(err.message); }
   };
 
+  const handleQuickVendor = async (e) => {
+    e.preventDefault();
+    if (!quickName.trim()) { setQuickError("Name is required."); return; }
+    if (!/^[a-zA-Z\s'.,-]+$/.test(quickName.trim())) { setQuickError("Name can only contain letters and spaces."); return; }
+    if (quickEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(quickEmail)) { setQuickError("Invalid email address."); return; }
+    if (quickMobile.trim() && !/^\+?[0-9]{7,15}$/.test(quickMobile.trim().replace(/\s/g, ""))) { setQuickError("Mobile must contain 7–15 digits."); return; }
+    setQuickSaving(true); setQuickError("");
+    try {
+      const newContact = await api.createContact({
+        name: quickName.trim(),
+        type: "vendor",
+        email: quickEmail.trim() || null,
+        mobile: quickMobile.trim() || null,
+      });
+      setVendors((prev) => [...prev, newContact]);
+      setForm((f) => ({ ...f, vendor_id: String(newContact.id) }));
+      setShowQuickVendor(false);
+      setQuickName(""); setQuickEmail(""); setQuickMobile("");
+    } catch (err) {
+      setQuickError(err.message);
+    } finally { setQuickSaving(false); }
+  };
+
   const filteredOrders = orders.filter((o) => {
     const q = search.toLowerCase();
     const matchesSearch =
@@ -247,10 +278,27 @@ export default function PurchaseOrders() {
                 <div className="form-grid" style={{ marginBottom: 20 }}>
                   <div className="form-group">
                     <label>Vendor *</label>
-                    <select value={form.vendor_id} onChange={(e) => setForm((f) => ({ ...f, vendor_id: e.target.value }))} required>
-                      <option value="">— Select vendor —</option>
-                      {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
-                    </select>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <select
+                        value={form.vendor_id}
+                        onChange={(e) => setForm((f) => ({ ...f, vendor_id: e.target.value }))}
+                        required
+                        style={{ flex: 1 }}
+                      >
+                        <option value="">— Select vendor —</option>
+                        {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+                      </select>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        style={{ padding: "7px 12px", fontSize: 16, lineHeight: 1, flexShrink: 0 }}
+                        title="Quick-create a new vendor"
+                        onClick={() => { setShowQuickVendor(true); setQuickError(""); }}
+                      >
+                        +
+                      </button>
+                    </div>
+                    <span className="form-hint">Can't find the vendor? Click + to create one instantly.</span>
                   </div>
                   <div className="form-group">
                     <label>Order Date</label>
@@ -306,6 +354,44 @@ export default function PurchaseOrders() {
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={closeCreate}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? "Saving…" : "Create Order"}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Create Vendor mini-modal */}
+      {showQuickVendor && (
+        <div className="modal-backdrop" style={{ zIndex: 300 }} onClick={() => setShowQuickVendor(false)}>
+          <div className="modal" style={{ maxWidth: 380, zIndex: 301 }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Quick Create Vendor</h3>
+              <button className="modal-close" onClick={() => setShowQuickVendor(false)}>✕</button>
+            </div>
+            <form onSubmit={handleQuickVendor}>
+              <div className="modal-body">
+                {quickError && <div className="alert alert-error" style={{ marginBottom: 12 }}>{quickError}</div>}
+                <div className="form-grid cols-1">
+                  <div className="form-group">
+                    <label>Name *</label>
+                    <input value={quickName} onChange={(e) => setQuickName(e.target.value)} placeholder="e.g. Teak Wood Suppliers" autoFocus maxLength={150} />
+                  </div>
+                  <div className="form-group">
+                    <label>Email</label>
+                    <input type="email" value={quickEmail} onChange={(e) => setQuickEmail(e.target.value)} placeholder="vendor@example.com (optional)" maxLength={150} />
+                  </div>
+                  <div className="form-group">
+                    <label>Mobile</label>
+                    <input value={quickMobile} onChange={(e) => setQuickMobile(e.target.value)} placeholder="+91 9876543210 (optional)" maxLength={16} />
+                  </div>
+                </div>
+                <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8 }}>
+                  Saved as type <strong>Vendor</strong> and auto-selected.
+                </p>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowQuickVendor(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={quickSaving}>{quickSaving ? "Creating…" : "Create & Select"}</button>
               </div>
             </form>
           </div>
